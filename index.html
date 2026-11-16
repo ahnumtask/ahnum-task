@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AHNUM TASK | Work. Earn. Withdraw.</title>
+<style>
+:root {
+  --navy: #101a30;
+  --gold: #e9b949;
+  --bg: #f4f6fa;
+  --white: #ffffff;
+  --text: #182238;
+  --muted: #788399;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  background: var(--navy);
+  color: white;
+  padding: 22px 18px;
+}
+.brand { font-size: 25px; font-weight: 800; letter-spacing: 1px; }
+.brand span { color: var(--gold); }
+.tagline { color: #c7ceda; margin-top: 5px; font-size: 13px; }
+main { max-width: 850px; margin: auto; padding: 18px; padding-bottom: 100px; }
+.hero {
+  background: linear-gradient(135deg, #172747, #263e63);
+  color: white;
+  padding: 25px;
+  border-radius: 18px;
+  margin-bottom: 18px;
+}
+.hero h1 { margin: 0 0 10px; font-size: 27px; }
+.hero p { color: #d6deeb; line-height: 1.5; }
+.gold { color: var(--gold); }
+.card {
+  background: white;
+  padding: 19px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 14px #1727470b;
+}
+.card h2, .card h3 { margin-top: 0; }
+.balance {
+  background: var(--navy);
+  color: white;
+}
+.balance strong { display: block; font-size: 30px; margin-top: 9px; }
+.muted { color: var(--muted); font-size: 13px; }
+button {
+  border: 0;
+  background: var(--gold);
+  color: #172238;
+  font-weight: bold;
+  padding: 12px 17px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+button.secondary { background: #e9edf4; }
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0 14px;
+  border: 1px solid #dce1e9;
+  border-radius: 9px;
+  font-size: 15px;
+  background: white;
+}
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  overflow-x: auto;
+  background: white;
+  border-top: 1px solid #e3e6ec;
+  z-index: 5;
+}
+nav button {
+  background: white;
+  color: #647087;
+  border-radius: 0;
+  min-width: 85px;
+  flex: 1;
+  padding: 13px 5px;
+  font-size: 11px;
+}
+nav button.active { color: #172747; border-top: 3px solid var(--gold); }
+.page { display: none; }
+.page.active { display: block; }
+.task {
+  border: 1px solid #e8ebf1;
+  padding: 15px;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+.task button { margin-top: 10px; }
+.notice {
+  background: #fff6df;
+  border: 1px solid #f3dfaa;
+  color: #72531a;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">AHNUM <span>TASK</span></div>
+  <div class="tagline">WORK. EARN. WITHDRAW.</div>
+</header>
+
+<main>
+
+<section id="home" class="page active">
+  <div class="hero">
+    <h1>Welcome to AHNUM TASK</h1>
+    <p>Complete tasks, earn rewards and build your progress.</p>
+    <button onclick="showPage('tasks')">Explore Tasks</button>
+  </div>
+  <div class="card balance">
+    <div class="muted">Demo account balance</div>
+    <strong>0.000 TON</strong>
+    <p>₦0.00 approximate value</p>
+    <small>Demo display only — no real money is held.</small>
+  </div>
+  <div class="card">
+    <h3>How it works</h3>
+    <p>1. Register for an account when registration is available.</p>
+    <p>2. Choose your tasks.</p>
+    <p>3. Complete the instructions and submit your proof.</p>
+    <p>4. Wait for admin verification.</p>
+    <p>5. Receive eligible rewards after approval.</p>
+  </div>
+</section>
+
+<section id="tasks" class="page">
+  <div class="card">
+    <h2>Available Tasks</h2>
+    <p class="muted">Example tasks for the website preview.</p>
+    <div class="task">
+      <h3>Normal Task 01</h3>
+      <p>Example reward: <b>0.1 TON</b></p>
+      <p class="muted">Example duration: 30 minutes</p>
+      <button onclick="alert('Demo only. Task submission will be connected to the secure system later.')">View Task</button>
+    </div>
+    <div class="task">
+      <h3>Normal Task 02</h3>
+      <p>Example reward: <b>0.1 TON</b></p>
+      <p class="muted">Example duration: 7 hours</p>
+      <button onclick="alert('Demo only. Task submission will be connected to the secure system later.')">View Task</button>
+    </div>
+    <div class="notice">Task rewards and durations are examples. Real tasks will be configured by the administrator.</div>
+  </div>
+  <div class="card">
+    <h3>Repeat-task bonus calculator</h3>
+    <label>How many tasks do you want to complete?</label>
+    <input type="number" id="quantity" min="1" value="1" oninput="calculateBonus()">
+    <div id="bonusResult" class="notice">Choose a quantity to see the example calculation.</div>
+  </div>
+</section>
+
+<section id="invite" class="page">
+  <div class="card">
+    <h2>Invite Friends</h2>
+    <h3 class="gold">0.05 TON referral bonus</h3>
+    <p>Invite a friend. They must register and complete at least 3 approved tasks before your referral bonus becomes eligible.</p>
+    <p class="muted">The approximate Naira value changes with the TON price and exchange rate.</p>
+    <button onclick="alert('Referral links will be activated after the account system is connected.')">My Referral Link</button>
+  </div>
+</section>
+
+<section id="care" class="page">
+  <div class="card">
+    <h2>Customer Care</h2>
+    <p>Need help? Our support contact details will appear here.</p>
+    <p><b>WhatsApp:</b> To be added</p>
+    <p><b>Telegram:</b> To be added</p>
+  </div>
+</section>
+
+<section id="about" class="page">
+  <div class="card">
+    <h2>About AHNUM TASK</h2>
+    <p>AHNUM TASK is designed as a task-based rewards platform.</p>
+    <p>Users will be able to view available tasks, submit completion evidence, invite friends and request withdrawals when the platform is fully operational.</p>
+    <p>Our goal is to provide a clear and organised task experience.</p>
+  </div>
+</section>
+
+<section id="withdraw" class="page">
+  <div class="card">
+    <h2>Withdrawal</h2>
+    <p>Select your preferred withdrawal method.</p>
+    <label>Withdrawal method</label>
+    <select id="method">
+      <option>OPay</option>
+      <option>PalmPay</option>
+      <option>TON Wallet</option>
+    </select>
+    <label>Amount</label>
+    <input type="number" placeholder="Enter amount">
+    <label>Account number or public TON wallet address</label>
+    <input type="text" placeholder="Enter details">
+    <div class="notice">Demo only. Withdrawal requests and payments are not active yet. Never enter your wallet recovery phrase or private key.</div>
+    <button onclick="alert('Withdrawals are not active in this demo.')">Request Withdrawal</button>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="active" onclick="showPage('home',this)">⌂<br>Home</button>
+  <button onclick="showPage('tasks',this)">▣<br>Tasks</button>
+  <button onclick="showPage('invite',this)">♧<br>Invite</button>
+  <button onclick="showPage('care',this)">✆<br>Support</button>
+  <button onclick="showPage('about',this)">ⓘ<br>About</button>
+  <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
+</nav>
+
+<footer>© 2026 AHNUM TASK. All rights reserved.</footer>
+
+<script>
+function showPage(id, button) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  if (button) button.classList.add('active');
+  else document.querySelectorAll('nav button')[0].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function calculateBonus() {
+  const quantity = Math.floor(Number(document.getElementById('quantity').value));
+  const result = document.getElementById('bonusResult');
+
+  if (!quantity || quantity < 1) {
+    result.textContent = 'Enter at least 1 task.';
+    return;
+  }
+
+  let rate;
+  if (quantity === 1) rate = 0.05;
+  else if (quantity === 2) rate = 0.10;
+  else if (quantity === 3) rate = 0.15;
+  else if (quantity === 4) rate = 0.20;
+  else if (quantity === 5) rate = 0.30;
+  else if (quantity >= 11) rate = 0.50;
+  else {
+    result.textContent = 'The bonus rate for 6–10 tasks is still to be decided.';
+    return;
+  }
+
+  const base = 0.1;
+  const bonusPerTask = base * rate;
+  const totalBonus = bonusPerTask * quantity;
+  const totalBase = base * quantity;
+  const total = totalBase + totalBonus;
+
+  result.innerHTML =
+    'Selected tasks: <b>' + quantity + '</b><br>' +
+    'Bonus rate: <b>' + (rate * 100) + '%</b><br>' +
+    'Bonus per task: <b>' + bonusPerTask.toFixed(3) + ' TON</b><br>' +
+    'Total bonus: <b>' + totalBonus.toFixed(3) + ' TON</b><br>' +
+    'Normal reward: <b>' + totalBase.toFixed(3) + ' TON</b><br>' +
+    'Total example earnings: <b>' + total.toFixed(3) + ' TON</b><br><br>' +
+    '<small>Example only. Rewards are credited only after task approval.</small>';
+}
+calculateBonus();
+</script>
+
+</body>
+</html>
