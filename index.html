@@ -51,6 +51,8 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-
 th{color:var(--muted)}
 .auth{max-width:480px;margin:25px auto}
 .foot{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+.otp-input{text-align:center;font-size:28px;letter-spacing:12px;font-weight:bold;max-width:280px;margin:15px auto}
+.otp-box{text-align:center}
 @media(max-width:600px){header{padding:15px}nav{width:100%;overflow:auto}nav button{white-space:nowrap}.hero{padding:22px}}
 </style>
 </head>
@@ -76,7 +78,8 @@ th{color:var(--muted)}
 <section id="authView" class="auth card">
 <h2>Welcome to AHNUM TASK</h2>
 <p class="small">Create an account or sign in to access available tasks and rewards.</p>
-<div class="row">
+
+<div class="row" id="authChoices">
 <button id="showLogin" class="dark">Log in</button>
 <button id="showSignup" class="outline">Create account</button>
 </div>
@@ -93,14 +96,28 @@ th{color:var(--muted)}
 <form id="signupForm">
 <h3>Create your account</h3>
 <label>Full name</label>
-<input id="fullName" required>
+<input id="fullName" autocomplete="name" required>
 <label>Email address</label>
-<input id="signupEmail" type="email" required>
+<input id="signupEmail" type="email" autocomplete="email" required>
 <label>Password</label>
-<input id="signupPassword" type="password" minlength="8" required>
-<p class="small">Use at least 8 characters. You may need to confirm your email before signing in.</p>
+<input id="signupPassword" type="password" minlength="8" autocomplete="new-password" required>
+<p class="small">Use at least 8 characters. A six-digit verification code will be sent to your email.</p>
 <button class="primary" type="submit">Register</button>
 </form>
+
+<section id="otpSection" class="hidden otp-box">
+<h3>Verify your email</h3>
+<p class="small">We sent a six-digit verification code to:</p>
+<p><strong id="otpEmail"></strong></p>
+<form id="otpForm">
+<label for="otpCode">Enter your 6-digit code</label>
+<input id="otpCode" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+<button class="primary" type="submit">Verify email</button>
+</form>
+<button class="outline" id="resendOtp" type="button">Resend verification code</button>
+<button class="outline" id="backToSignup" type="button">Back to registration</button>
+</section>
+
 <div id="authMessage" aria-live="polite"></div>
 </section>
 
@@ -220,25 +237,45 @@ const SUPABASE_ANON_KEY="sb_publishable_3RaREsT5T9li9zPVVi3kYQ_wCUc7Ji1";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 let currentUser=null,profile=null,isAdmin=false;
+let pendingEmail="";
+let pendingName="";
+let pendingPassword="";
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function money(n){return Number(n||0).toFixed(6).replace(/0+$/,"").replace(/\.$/,"")+" TON";}
+
 function msg(id,text,type=""){
 const el=$(id);
 if(el){el.className="notice "+type;el.textContent=text;}
 }
+
 function showAuth(mode="signup"){
 $("authView").classList.remove("hidden");
 $("appView").classList.add("hidden");
 $("nav").classList.add("hidden");
+$("authChoices").classList.remove("hidden");
 $("signupForm").classList.toggle("hidden",mode!=="signup");
 $("loginForm").classList.toggle("hidden",mode!=="login");
+$("otpSection").classList.add("hidden");
 }
+
+function showOtp(email){
+$("signupForm").classList.add("hidden");
+$("loginForm").classList.add("hidden");
+$("authChoices").classList.add("hidden");
+$("otpSection").classList.remove("hidden");
+$("otpEmail").textContent=email;
+$("otpCode").value="";
+$("otpCode").focus();
+}
+
 function showApp(){
 $("authView").classList.add("hidden");
 $("appView").classList.remove("hidden");
 $("nav").classList.remove("hidden");
 }
+
 function page(name){
 document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
 $("page-"+name)?.classList.remove("hidden");
@@ -249,6 +286,7 @@ if(name==="invite")loadReferral();
 if(name==="withdraw")loadWithdrawals();
 if(name==="admin"&&isAdmin)loadAdmin();
 }
+
 document.querySelectorAll("nav [data-page]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.page)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.goto)));
 
@@ -257,24 +295,117 @@ $("showSignup").onclick=()=>showAuth("signup");
 
 $("signupForm").addEventListener("submit",async e=>{
 e.preventDefault();
-msg("authMessage","Creating your account…");
+
+const email=$("signupEmail").value.trim().toLowerCase();
+const password=$("signupPassword").value;
+const fullName=$("fullName").value.trim();
+
+if(!fullName)return msg("authMessage","Please enter your full name.","error");
+if(password.length<8)return msg("authMessage","Password must contain at least 8 characters.","error");
+
+pendingEmail=email;
+pendingName=fullName;
+pendingPassword=password;
+
+msg("authMessage","Creating your account and sending your verification code…");
+
 const ref=new URLSearchParams(location.search).get("ref");
+
 const {data,error}=await db.auth.signUp({
-email:$("signupEmail").value.trim(),
-password:$("signupPassword").value,
-options:{data:{full_name:$("fullName").value.trim(),referral_code:ref||null}}
+email,
+password,
+options:{
+data:{
+full_name:fullName,
+referral_code:ref||null
+}
+}
 });
+
+if(error){
+pendingPassword="";
+return msg("authMessage",error.message,"error");
+}
+
+if(data.session){
+pendingPassword="";
+await enter(data.user);
+return;
+}
+
+if(!data.user){
+pendingPassword="";
+return msg("authMessage","Registration could not be completed. Please try again.","error");
+}
+
+showOtp(email);
+msg("authMessage","Your account has been created. Enter the six-digit code sent to your email.","success");
+});
+
+$("otpForm").addEventListener("submit",async e=>{
+e.preventDefault();
+
+const token=$("otpCode").value.trim();
+
+if(!/^[0-9]{6}$/.test(token)){
+return msg("authMessage","Please enter a valid six-digit verification code.","error");
+}
+
+msg("authMessage","Verifying your email…");
+
+const {data,error}=await db.auth.verifyOtp({
+email:pendingEmail,
+token,
+type:"signup"
+});
+
+if(error){
+return msg("authMessage","Verification failed: "+error.message,"error");
+}
+
+pendingPassword="";
+pendingEmail="";
+pendingName="";
+
+msg("authMessage","Email verified successfully. Your account is ready.","success");
+
+if(data.user){
+await enter(data.user);
+}else{
+showAuth("login");
+msg("authMessage","Email verified. Please log in.","success");
+}
+});
+
+$("resendOtp").onclick=async()=>{
+if(!pendingEmail)return msg("authMessage","Please register again to request a code.","error");
+
+msg("authMessage","Sending a new verification code…");
+
+const {error}=await db.auth.resend({
+type:"signup",
+email:pendingEmail
+});
+
 if(error)return msg("authMessage",error.message,"error");
-msg("authMessage",data.session?"Account created.":"Account created. Check your email for a confirmation link, then log in.","success");
-});
+
+msg("authMessage","A new verification code has been requested. Check your inbox and spam folder.","success");
+};
+
+$("backToSignup").onclick=()=>{
+showAuth("signup");
+msg("authMessage","You can return to registration.","");
+};
 
 $("loginForm").addEventListener("submit",async e=>{
 e.preventDefault();
 msg("authMessage","Signing in…");
+
 const {error}=await db.auth.signInWithPassword({
 email:$("loginEmail").value.trim(),
 password:$("loginPassword").value
 });
+
 if(error)msg("authMessage",error.message,"error");
 });
 
@@ -287,6 +418,7 @@ async function boot(){
 const {data:{session}}=await db.auth.getSession();
 if(session)await enter(session.user);
 else showAuth();
+
 db.auth.onAuthStateChange((event,session)=>{
 if(event==="SIGNED_IN"&&session)enter(session.user);
 if(event==="SIGNED_OUT")showAuth("login");
@@ -305,9 +437,12 @@ async function loadProfile(){
 const {data,error}=await db.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
 if(error){msg("globalMessage","Could not load profile: "+error.message,"error");return;}
 profile=data;
+
 const role=await db.from("user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
 isAdmin=role.data?.role==="admin";
+
 $("adminNav").classList.toggle("hidden",!isAdmin);
+
 $("accountInfo").innerHTML=`<p><b>Name:</b> ${esc(profile?.full_name||currentUser.user_metadata?.full_name||"Member")}</p><p><b>Email:</b> ${esc(currentUser.email)}</p><p><b>Referral code:</b> ${esc(profile?.referral_code||"Not assigned")}</p>`;
 }
 
@@ -316,10 +451,12 @@ const [rw,sub]=await Promise.all([
 db.from("reward_transactions").select("amount").eq("user_id",currentUser.id),
 db.from("task_submissions").select("status").eq("user_id",currentUser.id)
 ]);
+
 if(rw.error||sub.error){
 msg("globalMessage","Dashboard data could not load. Check the database setup and policies.","error");
 return;
 }
+
 const total=(rw.data||[]).reduce((s,r)=>s+Number(r.amount||0),0);
 $("balance").textContent=money(total);
 $("approvedCount").textContent=(sub.data||[]).filter(x=>x.status==="approved").length;
@@ -329,9 +466,12 @@ $("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").len
 async function loadTasks(){
 const box=$("tasksList");
 box.innerHTML="Loading tasks…";
+
 const {data,error}=await db.from("tasks").select("*").eq("is_active",true).order("created_at",{ascending:false});
+
 if(error){box.innerHTML=`<p class="notice error">Could not load tasks: ${esc(error.message)}</p>`;return;}
 if(!data?.length){box.innerHTML="<p class='small'>There are no active tasks right now.</p>";return;}
+
 box.innerHTML=data.map(t=>`
 <article class="task">
 <span class="pill">${esc(t.category||"General")}</span>
@@ -341,6 +481,7 @@ box.innerHTML=data.map(t=>`
 <div class="row"><b>${money(t.reward)}</b><span class="small">${Number(t.duration_minutes||0)} min</span></div>
 <button class="primary submitTask" data-id="${esc(t.id)}">Submit proof</button>
 </article>`).join("");
+
 box.querySelectorAll(".submitTask").forEach(b=>b.onclick=()=>submissionDialog(b.dataset.id));
 }
 
@@ -348,26 +489,44 @@ async function submissionDialog(taskId){
 const uid=prompt("Enter the UID required for this task:");
 if(uid===null)return;
 if(!uid.trim())return alert("UID is required.");
+
 const fileInput=document.createElement("input");
-fileInput.type="file";fileInput.accept="image/*";
+fileInput.type="file";
+fileInput.accept="image/*";
+
 fileInput.onchange=async()=>{
-const file=fileInput.files[0];if(!file)return;
+const file=fileInput.files[0];
+if(!file)return;
+
+if(file.size>5*1024*1024)return msg("taskMessage","Screenshot must be 5 MB or smaller.","error");
+
 msg("taskMessage","Uploading screenshot and submitting…");
+
 const ext=(file.name.split(".").pop()||"png").replace(/[^a-zA-Z0-9]/g,"");
 const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
+
 const up=await db.storage.from("task-proofs").upload(path,file,{contentType:file.type||"image/png",upsert:false});
+
 if(up.error)return msg("taskMessage","Screenshot upload failed: "+up.error.message,"error");
+
 const ins=await db.from("task_submissions").insert({
-id:crypto.randomUUID(),user_id:currentUser.id,task_id:taskId,
-uid:uid.trim(),proof_path:path,status:"pending"
+id:crypto.randomUUID(),
+user_id:currentUser.id,
+task_id:taskId,
+uid:uid.trim(),
+proof_path:path,
+status:"pending"
 });
+
 if(ins.error){
 await db.storage.from("task-proofs").remove([path]);
 return msg("taskMessage","Submission failed: "+ins.error.message,"error");
 }
+
 msg("taskMessage","Your proof has been submitted for administrator review.","success");
 await loadDashboard();
 };
+
 fileInput.click();
 }
 
@@ -376,7 +535,9 @@ const [r,s]=await Promise.all([
 db.from("reward_transactions").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
 db.from("task_submissions").select("*,tasks(title)").eq("user_id",currentUser.id).order("created_at",{ascending:false})
 ]);
+
 $("rewardsRows").innerHTML=(r.data||[]).map(x=>`<tr><td>${new Date(x.created_at).toLocaleDateString()}</td><td>${esc(x.reward_type)}</td><td>${money(x.amount)}</td></tr>`).join("")||"<tr><td colspan='3'>No rewards yet.</td></tr>";
+
 $("submissionRows").innerHTML=(s.data||[]).map(x=>`<tr><td>${esc(x.tasks?.title||"Task")}</td><td>${esc(x.uid)}</td><td><span class="pill ${x.status==="approved"?"ok":x.status==="rejected"?"no":"wait"}">${esc(x.status)}</span></td><td>${esc(x.rejection_reason||"—")}</td></tr>`).join("")||"<tr><td colspan='4'>No submissions yet.</td></tr>";
 }
 
@@ -384,6 +545,7 @@ async function loadReferral(){
 const code=profile?.referral_code||"";
 $("refCode").textContent=code||"Not assigned";
 $("refLink").value=code?`${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`:"";
+
 $("copyRef").onclick=async()=>{
 if(!$("refLink").value)return;
 await navigator.clipboard.writeText($("refLink").value);
@@ -393,41 +555,60 @@ alert("Referral link copied.");
 
 function accountInputs(){
 const m=$("withdrawMethod").value;
+
 let fields=m==="PayPal"
 ?'<label>PayPal email</label><input id="payEmail" type="email" required>'
 :m==="TON Wallet"
 ?'<label>TON public wallet address</label><input id="tonAddress" required>'
 :'<label>Account number</label><input id="bankNumber" inputmode="numeric" required><label>Account holder name</label><input id="holderName" required>';
+
 $("accountFields").innerHTML=fields;
 }
+
 $("withdrawMethod").onchange=accountInputs;
 accountInputs();
 
 $("withdrawForm").addEventListener("submit",async e=>{
 e.preventDefault();
+
 const method=$("withdrawMethod").value;
-let details=method==="PayPal"?{email:$("payEmail").value.trim()}
-:method==="TON Wallet"?{wallet_address:$("tonAddress").value.trim()}
+
+let details=method==="PayPal"
+?{email:$("payEmail").value.trim()}
+:method==="TON Wallet"
+?{wallet_address:$("tonAddress").value.trim()}
 :{account_number:$("bankNumber").value.trim(),account_name:$("holderName").value.trim()};
+
 const amount=Number($("withdrawAmount").value);
+
 if(!Number.isFinite(amount)||amount<=0)return msg("withdrawMessage","Enter a valid amount.","error");
+
 const {error}=await db.from("withdrawal_requests").insert({
-user_id:currentUser.id,method,amount,account_details:details,status:"pending"
+user_id:currentUser.id,
+method,
+amount,
+account_details:details,
+status:"pending"
 });
+
 if(error)msg("withdrawMessage",error.message,"error");
 else{
 msg("withdrawMessage","Withdrawal request submitted for manual review.","success");
-e.target.reset();accountInputs();loadWithdrawals();
+e.target.reset();
+accountInputs();
+loadWithdrawals();
 }
 });
 
 async function loadWithdrawals(){
 const {data,error}=await db.from("withdrawal_requests").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
+
 $("withdrawRows").innerHTML=error?esc(error.message):(data||[]).map(x=>`<p>${money(x.amount)} · ${esc(x.method)} · <span class="pill">${esc(x.status)}</span></p>`).join("")||"No withdrawal requests yet.";
 }
 
 $("taskForm").addEventListener("submit",async e=>{
 e.preventDefault();
+
 const {error}=await db.from("tasks").insert({
 title:$("newTaskTitle").value.trim(),
 description:$("newTaskDesc").value.trim(),
@@ -437,28 +618,37 @@ duration_minutes:Number($("newTaskDuration").value),
 category:$("newTaskCategory").value.trim(),
 is_active:true
 });
+
 msg("adminTaskMessage",error?error.message:"Task created.",error?"error":"success");
+
 if(!error){e.target.reset();loadTasks();}
 });
 
 async function loadAdmin(){
 if(!isAdmin)return;
+
 const {data,error}=await db.from("task_submissions")
 .select("id,user_id,task_id,uid,proof_path,status,created_at")
 .eq("status","pending").order("created_at",{ascending:true});
+
 if(error){$("adminSubmissions").textContent=error.message;return;}
+
 const taskIds=[...new Set((data||[]).map(x=>x.task_id))];
 let tasks={};
+
 if(taskIds.length){
 const t=await db.from("tasks").select("id,title").in("id",taskIds);
 (t.data||[]).forEach(x=>tasks[x.id]=x.title);
 }
+
 const users=[...new Set((data||[]).map(x=>x.user_id))];
 let names={};
+
 if(users.length){
 const p=await db.from("profiles").select("id,full_name").in("id",users);
 (p.data||[]).forEach(x=>names[x.id]=x.full_name);
 }
+
 $("adminSubmissions").innerHTML=(data||[]).map(x=>`
 <div class="task">
 <b>${esc(tasks[x.task_id]||"Task")}</b>
@@ -470,23 +660,31 @@ $("adminSubmissions").innerHTML=(data||[]).map(x=>`
 
 document.querySelectorAll(".proofBtn").forEach(b=>b.onclick=async()=>{
 const {data,error}=await db.storage.from("task-proofs").createSignedUrl(b.dataset.path,120);
-if(error)alert(error.message);else window.open(data.signedUrl,"_blank");
+if(error)alert(error.message);
+else window.open(data.signedUrl,"_blank");
 });
+
 document.querySelectorAll(".approveBtn").forEach(b=>b.onclick=async()=>{
 if(!confirm("Approve this submission and credit its reward?"))return;
+
 const {error}=await db.rpc("admin_approve_submission",{p_submission_id:b.dataset.id});
+
 if(error)alert(error.message);
 else{alert("Submission approved.");loadAdmin();loadDashboard();}
 });
+
 document.querySelectorAll(".rejectBtn").forEach(b=>b.onclick=async()=>{
 const reason=prompt("Enter a rejection reason:");
 if(!reason?.trim())return;
+
 const {error}=await db.rpc("admin_reject_submission",{p_submission_id:b.dataset.id,p_reason:reason.trim()});
+
 if(error)alert(error.message);
 else{alert("Submission rejected.");loadAdmin();}
 });
 
 const w=await db.from("withdrawal_requests").select("*").eq("status","pending").order("created_at",{ascending:true});
+
 $("adminWithdrawals").innerHTML=w.error?esc(w.error.message):(w.data||[]).map(x=>`
 <div class="task">
 <b>${money(x.amount)} · ${esc(x.method)}</b>
@@ -497,11 +695,17 @@ $("adminWithdrawals").innerHTML=w.error?esc(w.error.message):(w.data||[]).map(x=
 
 document.querySelectorAll(".paidBtn,.failBtn").forEach(b=>b.onclick=async()=>{
 const status=b.classList.contains("paidBtn")?"paid":"rejected";
+
 if(!confirm(`Mark request ${status}?`))return;
+
 const {error}=await db.rpc("admin_set_withdrawal_status",{
-p_withdrawal_id:b.dataset.id,p_status:status,p_admin_notes:null
+p_withdrawal_id:b.dataset.id,
+p_status:status,
+p_admin_notes:null
 });
-if(error)alert(error.message);else loadAdmin();
+
+if(error)alert(error.message);
+else loadAdmin();
 });
 }
 
