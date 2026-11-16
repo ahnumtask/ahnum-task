@@ -1,284 +1,512 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AHNUM TASK | Work. Earn. Withdraw.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root {
-  --navy: #101a30;
-  --gold: #e9b949;
-  --bg: #f4f6fa;
-  --white: #ffffff;
-  --text: #182238;
-  --muted: #788399;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-header {
-  background: var(--navy);
-  color: white;
-  padding: 22px 18px;
-}
-.brand { font-size: 25px; font-weight: 800; letter-spacing: 1px; }
-.brand span { color: var(--gold); }
-.tagline { color: #c7ceda; margin-top: 5px; font-size: 13px; }
-main { max-width: 850px; margin: auto; padding: 18px; padding-bottom: 100px; }
-.hero {
-  background: linear-gradient(135deg, #172747, #263e63);
-  color: white;
-  padding: 25px;
-  border-radius: 18px;
-  margin-bottom: 18px;
-}
-.hero h1 { margin: 0 0 10px; font-size: 27px; }
-.hero p { color: #d6deeb; line-height: 1.5; }
-.gold { color: var(--gold); }
-.card {
-  background: white;
-  padding: 19px;
-  border-radius: 15px;
-  margin-bottom: 15px;
-  box-shadow: 0 3px 14px #1727470b;
-}
-.card h2, .card h3 { margin-top: 0; }
-.balance {
-  background: var(--navy);
-  color: white;
-}
-.balance strong { display: block; font-size: 30px; margin-top: 9px; }
-.muted { color: var(--muted); font-size: 13px; }
-button {
-  border: 0;
-  background: var(--gold);
-  color: #172238;
-  font-weight: bold;
-  padding: 12px 17px;
-  border-radius: 9px;
-  cursor: pointer;
-}
-button.secondary { background: #e9edf4; }
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin: 7px 0 14px;
-  border: 1px solid #dce1e9;
-  border-radius: 9px;
-  font-size: 15px;
-  background: white;
-}
-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  overflow-x: auto;
-  background: white;
-  border-top: 1px solid #e3e6ec;
-  z-index: 5;
-}
-nav button {
-  background: white;
-  color: #647087;
-  border-radius: 0;
-  min-width: 85px;
-  flex: 1;
-  padding: 13px 5px;
-  font-size: 11px;
-}
-nav button.active { color: #172747; border-top: 3px solid var(--gold); }
-.page { display: none; }
-.page.active { display: block; }
-.task {
-  border: 1px solid #e8ebf1;
-  padding: 15px;
-  border-radius: 12px;
-  margin: 12px 0;
-}
-.task button { margin-top: 10px; }
-.notice {
-  background: #fff6df;
-  border: 1px solid #f3dfaa;
-  color: #72531a;
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+:root{--navy:#08172e;--navy2:#102746;--gold:#e8b84d;--bg:#f5f7fb;--ink:#15243a;--muted:#718096;--line:#e5eaf1;--green:#16865b;--red:#c44747}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:bold}
+.primary{background:var(--gold);color:#171717}
+.dark{background:var(--navy);color:white}
+.outline{background:white;border:1px solid var(--line);color:var(--ink)}
+.danger{background:#fff0f0;color:var(--red)}
+.hidden{display:none!important}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:white;padding:18px max(18px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:1px;font-size:22px}
+.brand span,.gold{color:var(--gold)}
+.tag{font-size:11px;letter-spacing:2px;color:#d6deea;margin-top:4px}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+nav button{background:transparent;color:#eaf0f8;padding:9px 11px}
+nav button.active{background:#ffffff18;color:var(--gold)}
+main{max-width:1100px;margin:24px auto;padding:0 16px}
+.hero{background:linear-gradient(120deg,#0a1a32,#183b61);border-radius:20px;color:white;padding:30px;margin-bottom:20px}
+.hero h1{font-size:clamp(27px,5vw,42px);margin:0 0 10px}
+.hero p{color:#d7e0eb;max-width:620px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card,.task{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #0c23400a}
+.card h2,.card h3{margin-top:0}
+.stat{font-size:27px;font-weight:900;color:var(--navy)}
+.label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d9e1eb;border-radius:10px;background:white;margin:5px 0 12px;color:var(--ink)}
+textarea{min-height:90px}
+label{font-size:13px;font-weight:bold;display:block}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.pill{display:inline-block;border-radius:30px;padding:5px 9px;font-size:11px;font-weight:bold;background:#eef3f8;color:#40536b}
+.pill.ok{background:#e7f7ef;color:var(--green)}
+.pill.wait{background:#fff5df;color:#94650a}
+.pill.no{background:#fff0f0;color:var(--red)}
+.notice{padding:12px;border-radius:10px;background:#fff8e8;color:#77530d;margin:12px 0;font-size:13px;line-height:1.5}
+.success{background:#eaf8f0;color:#14623f}
+.error{background:#fff0f0;color:#a42d2d}
+.small{font-size:12px;color:var(--muted)}
+.tablewrap{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted)}
+.auth{max-width:480px;margin:25px auto}
+.foot{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+@media(max-width:600px){header{padding:15px}nav{width:100%;overflow:auto}nav button{white-space:nowrap}.hero{padding:22px}}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="brand">AHNUM <span>TASK</span></div>
-  <div class="tagline">WORK. EARN. WITHDRAW.</div>
+<div>
+<div class="brand">AHNUM <span>TASK</span></div>
+<div class="tag">WORK. EARN. WITHDRAW.</div>
+</div>
+<nav id="nav" class="hidden">
+<button data-page="home" class="active">Home</button>
+<button data-page="tasks">Tasks</button>
+<button data-page="wallet">Wallet</button>
+<button data-page="invite">Invite</button>
+<button data-page="withdraw">Withdraw</button>
+<button data-page="account">Account</button>
+<button data-page="admin" id="adminNav" class="hidden">Admin</button>
+<button id="logoutBtn">Log out</button>
+</nav>
 </header>
 
 <main>
+<section id="authView" class="auth card">
+<h2>Welcome to AHNUM TASK</h2>
+<p class="small">Create an account or sign in to access available tasks and rewards.</p>
+<div class="row">
+<button id="showLogin" class="dark">Log in</button>
+<button id="showSignup" class="outline">Create account</button>
+</div>
 
-<section id="home" class="page active">
-  <div class="hero">
-    <h1>Welcome to AHNUM TASK</h1>
-    <p>Complete tasks, earn rewards and build your progress.</p>
-    <button onclick="showPage('tasks')">Explore Tasks</button>
-  </div>
-  <div class="card balance">
-    <div class="muted">Demo account balance</div>
-    <strong>0.000 TON</strong>
-    <p>₦0.00 approximate value</p>
-    <small>Demo display only — no real money is held.</small>
-  </div>
-  <div class="card">
-    <h3>How it works</h3>
-    <p>1. Register for an account when registration is available.</p>
-    <p>2. Choose your tasks.</p>
-    <p>3. Complete the instructions and submit your proof.</p>
-    <p>4. Wait for admin verification.</p>
-    <p>5. Receive eligible rewards after approval.</p>
-  </div>
+<form id="loginForm" class="hidden">
+<h3>Log in</h3>
+<label>Email address</label>
+<input id="loginEmail" type="email" required>
+<label>Password</label>
+<input id="loginPassword" type="password" required>
+<button class="primary" type="submit">Log in</button>
+</form>
+
+<form id="signupForm">
+<h3>Create your account</h3>
+<label>Full name</label>
+<input id="fullName" required>
+<label>Email address</label>
+<input id="signupEmail" type="email" required>
+<label>Password</label>
+<input id="signupPassword" type="password" minlength="8" required>
+<p class="small">Use at least 8 characters. You may need to confirm your email before signing in.</p>
+<button class="primary" type="submit">Register</button>
+</form>
+<div id="authMessage" aria-live="polite"></div>
 </section>
 
-<section id="tasks" class="page">
-  <div class="card">
-    <h2>Available Tasks</h2>
-    <p class="muted">Example tasks for the website preview.</p>
-    <div class="task">
-      <h3>Normal Task 01</h3>
-      <p>Example reward: <b>0.1 TON</b></p>
-      <p class="muted">Example duration: 30 minutes</p>
-      <button onclick="alert('Demo only. Task submission will be connected to the secure system later.')">View Task</button>
-    </div>
-    <div class="task">
-      <h3>Normal Task 02</h3>
-      <p>Example reward: <b>0.1 TON</b></p>
-      <p class="muted">Example duration: 7 hours</p>
-      <button onclick="alert('Demo only. Task submission will be connected to the secure system later.')">View Task</button>
-    </div>
-    <div class="notice">Task rewards and durations are examples. Real tasks will be configured by the administrator.</div>
-  </div>
-  <div class="card">
-    <h3>Repeat-task bonus calculator</h3>
-    <label>How many tasks do you want to complete?</label>
-    <input type="number" id="quantity" min="1" value="1" oninput="calculateBonus()">
-    <div id="bonusResult" class="notice">Choose a quantity to see the example calculation.</div>
-  </div>
+<section id="appView" class="hidden">
+<section class="hero">
+<div class="gold">WELCOME TO AHNUM TASK</div>
+<h1>Complete tasks.<br><span class="gold">Earn rewards.</span></h1>
+<p>Explore available tasks, submit your proof, and track your approved rewards from your account.</p>
+<button class="primary" data-goto="tasks">Explore tasks</button>
 </section>
 
-<section id="invite" class="page">
-  <div class="card">
-    <h2>Invite Friends</h2>
-    <h3 class="gold">0.05 TON referral bonus</h3>
-    <p>Invite a friend. They must register and complete at least 3 approved tasks before your referral bonus becomes eligible.</p>
-    <p class="muted">The approximate Naira value changes with the TON price and exchange rate.</p>
-    <button onclick="alert('Referral links will be activated after the account system is connected.')">My Referral Link</button>
-  </div>
+<div class="grid">
+<div class="card"><div class="label">Available balance</div><div class="stat" id="balance">0 TON</div></div>
+<div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCount">0</div></div>
+<div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCount">0</div></div>
+</div>
+
+<section id="page-home" class="page">
+<div class="card">
+<h2>Your dashboard</h2>
+<p class="small">Your balance updates after an administrator approves submitted task proof.</p>
+<div id="recentActivity" class="small">Your recent activity will appear here.</div>
+</div>
 </section>
 
-<section id="care" class="page">
-  <div class="card">
-    <h2>Customer Care</h2>
-    <p>Need help? Our support contact details will appear here.</p>
-    <p><b>WhatsApp:</b> To be added</p>
-    <p><b>Telegram:</b> To be added</p>
-  </div>
+<section id="page-tasks" class="page hidden">
+<div class="row"><h2>Available tasks</h2><button class="outline" id="refreshTasks">Refresh</button></div>
+<div id="tasksList" class="grid"></div>
+<div id="taskMessage"></div>
 </section>
 
-<section id="about" class="page">
-  <div class="card">
-    <h2>About AHNUM TASK</h2>
-    <p>AHNUM TASK is designed as a task-based rewards platform.</p>
-    <p>Users will be able to view available tasks, submit completion evidence, invite friends and request withdrawals when the platform is fully operational.</p>
-    <p>Our goal is to provide a clear and organised task experience.</p>
-  </div>
+<section id="page-wallet" class="page hidden">
+<div class="card">
+<h2>Reward history</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
+<tbody id="rewardsRows"></tbody>
+</table></div>
+</div>
+<div class="card">
+<h2>My submissions</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Task</th><th>UID</th><th>Status</th><th>Admin note</th></tr></thead>
+<tbody id="submissionRows"></tbody>
+</table></div>
+</div>
 </section>
 
-<section id="withdraw" class="page">
-  <div class="card">
-    <h2>Withdrawal</h2>
-    <p>Select your preferred withdrawal method.</p>
-    <label>Withdrawal method</label>
-    <select id="method">
-      <option>OPay</option>
-      <option>PalmPay</option>
-      <option>TON Wallet</option>
-    </select>
-    <label>Amount</label>
-    <input type="number" placeholder="Enter amount">
-    <label>Account number or public TON wallet address</label>
-    <input type="text" placeholder="Enter details">
-    <div class="notice">Demo only. Withdrawal requests and payments are not active yet. Never enter your wallet recovery phrase or private key.</div>
-    <button onclick="alert('Withdrawals are not active in this demo.')">Request Withdrawal</button>
-  </div>
+<section id="page-invite" class="page hidden">
+<div class="card">
+<h2>Invite friends</h2>
+<p>Share your referral link. A referral reward is recorded when an eligible invited member completes at least two tasks approved by an administrator.</p>
+<div class="label">Your referral code</div>
+<div class="row"><strong id="refCode">—</strong><button class="outline" id="copyRef">Copy link</button></div>
+<input id="refLink" readonly>
+</div>
 </section>
 
+<section id="page-withdraw" class="page hidden">
+<div class="card">
+<h2>Request a withdrawal</h2>
+<div class="notice">Withdrawal requests are reviewed manually. Submitting a request does not send money automatically. Never enter a wallet recovery phrase or private key.</div>
+<form id="withdrawForm">
+<label>Amount (TON)</label>
+<input id="withdrawAmount" type="number" min="0.000001" step="0.000001" required>
+<label>Payment method</label>
+<select id="withdrawMethod">
+<option value="OPay">OPay</option>
+<option value="PalmPay">PalmPay</option>
+<option value="PayPal">PayPal</option>
+<option value="TON Wallet">TON Wallet</option>
+</select>
+<div id="accountFields"></div>
+<button class="primary">Submit withdrawal request</button>
+</form>
+<div id="withdrawMessage"></div>
+</div>
+<div class="card"><h3>My withdrawal requests</h3><div id="withdrawRows"></div></div>
+</section>
+
+<section id="page-account" class="page hidden">
+<div class="card"><h2>Account</h2><div id="accountInfo"></div></div>
+</section>
+
+<section id="page-admin" class="page hidden">
+<div class="card">
+<h2>Admin — create a task</h2>
+<form id="taskForm">
+<label>Task title</label><input id="newTaskTitle" required>
+<label>Description</label><textarea id="newTaskDesc" required></textarea>
+<label>Instructions</label><textarea id="newTaskInstructions"></textarea>
+<div class="formgrid">
+<div><label>Reward (TON)</label><input id="newTaskReward" type="number" min="0" step="0.000001" required></div>
+<div><label>Duration (minutes)</label><input id="newTaskDuration" type="number" min="1" value="30"></div>
+<div><label>Category</label><input id="newTaskCategory" value="General"></div>
+</div>
+<button class="primary">Create task</button>
+</form>
+<div id="adminTaskMessage"></div>
+</div>
+<div class="card"><h2>Review submissions</h2><div id="adminSubmissions" class="tablewrap"></div></div>
+<div class="card"><h2>Withdrawal requests</h2><div id="adminWithdrawals" class="tablewrap"></div></div>
+</section>
+</section>
+<div id="globalMessage" aria-live="polite"></div>
 </main>
 
-<nav>
-  <button class="active" onclick="showPage('home',this)">⌂<br>Home</button>
-  <button onclick="showPage('tasks',this)">▣<br>Tasks</button>
-  <button onclick="showPage('invite',this)">♧<br>Invite</button>
-  <button onclick="showPage('care',this)">✆<br>Support</button>
-  <button onclick="showPage('about',this)">ⓘ<br>About</button>
-  <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
-</nav>
-
-<footer>© 2026 AHNUM TASK. All rights reserved.</footer>
+<div class="foot">
+AHNUM TASK · WORK. EARN. WITHDRAW. ·
+<a href="https://wa.me/message/XS4F7ZQ3IR2CO1">WhatsApp Support</a> ·
+<a href="https://t.me/ahnumtask">Telegram</a>
+</div>
 
 <script>
-function showPage(id, button) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  if (button) button.classList.add('active');
-  else document.querySelectorAll('nav button')[0].classList.add('active');
-  window.scrollTo(0, 0);
+const SUPABASE_URL="https://qvtyinfpsckvbojouapk.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_3RaREsT5T9li9zPVVi3kYQ_wCUc7Ji1";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+let currentUser=null,profile=null,isAdmin=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function money(n){return Number(n||0).toFixed(6).replace(/0+$/,"").replace(/\.$/,"")+" TON";}
+function msg(id,text,type=""){
+const el=$(id);
+if(el){el.className="notice "+type;el.textContent=text;}
+}
+function showAuth(mode="signup"){
+$("authView").classList.remove("hidden");
+$("appView").classList.add("hidden");
+$("nav").classList.add("hidden");
+$("signupForm").classList.toggle("hidden",mode!=="signup");
+$("loginForm").classList.toggle("hidden",mode!=="login");
+}
+function showApp(){
+$("authView").classList.add("hidden");
+$("appView").classList.remove("hidden");
+$("nav").classList.remove("hidden");
+}
+function page(name){
+document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+$("page-"+name)?.classList.remove("hidden");
+document.querySelectorAll("nav [data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===name));
+if(name==="tasks")loadTasks();
+if(name==="wallet")loadWallet();
+if(name==="invite")loadReferral();
+if(name==="withdraw")loadWithdrawals();
+if(name==="admin"&&isAdmin)loadAdmin();
+}
+document.querySelectorAll("nav [data-page]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.page)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.goto)));
+
+$("showLogin").onclick=()=>showAuth("login");
+$("showSignup").onclick=()=>showAuth("signup");
+
+$("signupForm").addEventListener("submit",async e=>{
+e.preventDefault();
+msg("authMessage","Creating your account…");
+const ref=new URLSearchParams(location.search).get("ref");
+const {data,error}=await db.auth.signUp({
+email:$("signupEmail").value.trim(),
+password:$("signupPassword").value,
+options:{data:{full_name:$("fullName").value.trim(),referral_code:ref||null}}
+});
+if(error)return msg("authMessage",error.message,"error");
+msg("authMessage",data.session?"Account created.":"Account created. Check your email for a confirmation link, then log in.","success");
+});
+
+$("loginForm").addEventListener("submit",async e=>{
+e.preventDefault();
+msg("authMessage","Signing in…");
+const {error}=await db.auth.signInWithPassword({
+email:$("loginEmail").value.trim(),
+password:$("loginPassword").value
+});
+if(error)msg("authMessage",error.message,"error");
+});
+
+$("logoutBtn").onclick=async()=>{
+await db.auth.signOut();
+currentUser=null;profile=null;showAuth("login");
+};
+
+async function boot(){
+const {data:{session}}=await db.auth.getSession();
+if(session)await enter(session.user);
+else showAuth();
+db.auth.onAuthStateChange((event,session)=>{
+if(event==="SIGNED_IN"&&session)enter(session.user);
+if(event==="SIGNED_OUT")showAuth("login");
+});
 }
 
-function calculateBonus() {
-  const quantity = Math.floor(Number(document.getElementById('quantity').value));
-  const result = document.getElementById('bonusResult');
-
-  if (!quantity || quantity < 1) {
-    result.textContent = 'Enter at least 1 task.';
-    return;
-  }
-
-  let rate;
-  if (quantity === 1) rate = 0.05;
-  else if (quantity === 2) rate = 0.10;
-  else if (quantity === 3) rate = 0.15;
-  else if (quantity === 4) rate = 0.20;
-  else if (quantity === 5) rate = 0.30;
-  else if (quantity >= 11) rate = 0.50;
-  else {
-    result.textContent = 'The bonus rate for 6–10 tasks is still to be decided.';
-    return;
-  }
-
-  const base = 0.1;
-  const bonusPerTask = base * rate;
-  const totalBonus = bonusPerTask * quantity;
-  const totalBase = base * quantity;
-  const total = totalBase + totalBonus;
-
-  result.innerHTML =
-    'Selected tasks: <b>' + quantity + '</b><br>' +
-    'Bonus rate: <b>' + (rate * 100) + '%</b><br>' +
-    'Bonus per task: <b>' + bonusPerTask.toFixed(3) + ' TON</b><br>' +
-    'Total bonus: <b>' + totalBonus.toFixed(3) + ' TON</b><br>' +
-    'Normal reward: <b>' + totalBase.toFixed(3) + ' TON</b><br>' +
-    'Total example earnings: <b>' + total.toFixed(3) + ' TON</b><br><br>' +
-    '<small>Example only. Rewards are credited only after task approval.</small>';
+async function enter(user){
+currentUser=user;
+showApp();
+await loadProfile();
+await loadDashboard();
+page("home");
 }
-calculateBonus();
+
+async function loadProfile(){
+const {data,error}=await db.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
+if(error){msg("globalMessage","Could not load profile: "+error.message,"error");return;}
+profile=data;
+const role=await db.from("user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
+isAdmin=role.data?.role==="admin";
+$("adminNav").classList.toggle("hidden",!isAdmin);
+$("accountInfo").innerHTML=`<p><b>Name:</b> ${esc(profile?.full_name||currentUser.user_metadata?.full_name||"Member")}</p><p><b>Email:</b> ${esc(currentUser.email)}</p><p><b>Referral code:</b> ${esc(profile?.referral_code||"Not assigned")}</p>`;
+}
+
+async function loadDashboard(){
+const [rw,sub]=await Promise.all([
+db.from("reward_transactions").select("amount").eq("user_id",currentUser.id),
+db.from("task_submissions").select("status").eq("user_id",currentUser.id)
+]);
+if(rw.error||sub.error){
+msg("globalMessage","Dashboard data could not load. Check the database setup and policies.","error");
+return;
+}
+const total=(rw.data||[]).reduce((s,r)=>s+Number(r.amount||0),0);
+$("balance").textContent=money(total);
+$("approvedCount").textContent=(sub.data||[]).filter(x=>x.status==="approved").length;
+$("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").length;
+}
+
+async function loadTasks(){
+const box=$("tasksList");
+box.innerHTML="Loading tasks…";
+const {data,error}=await db.from("tasks").select("*").eq("is_active",true).order("created_at",{ascending:false});
+if(error){box.innerHTML=`<p class="notice error">Could not load tasks: ${esc(error.message)}</p>`;return;}
+if(!data?.length){box.innerHTML="<p class='small'>There are no active tasks right now.</p>";return;}
+box.innerHTML=data.map(t=>`
+<article class="task">
+<span class="pill">${esc(t.category||"General")}</span>
+<h3>${esc(t.title)}</h3>
+<p>${esc(t.description)}</p>
+<p class="small">${esc(t.instructions||"Follow the task instructions and submit proof.")}</p>
+<div class="row"><b>${money(t.reward)}</b><span class="small">${Number(t.duration_minutes||0)} min</span></div>
+<button class="primary submitTask" data-id="${esc(t.id)}">Submit proof</button>
+</article>`).join("");
+box.querySelectorAll(".submitTask").forEach(b=>b.onclick=()=>submissionDialog(b.dataset.id));
+}
+
+async function submissionDialog(taskId){
+const uid=prompt("Enter the UID required for this task:");
+if(uid===null)return;
+if(!uid.trim())return alert("UID is required.");
+const fileInput=document.createElement("input");
+fileInput.type="file";fileInput.accept="image/*";
+fileInput.onchange=async()=>{
+const file=fileInput.files[0];if(!file)return;
+msg("taskMessage","Uploading screenshot and submitting…");
+const ext=(file.name.split(".").pop()||"png").replace(/[^a-zA-Z0-9]/g,"");
+const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
+const up=await db.storage.from("task-proofs").upload(path,file,{contentType:file.type||"image/png",upsert:false});
+if(up.error)return msg("taskMessage","Screenshot upload failed: "+up.error.message,"error");
+const ins=await db.from("task_submissions").insert({
+id:crypto.randomUUID(),user_id:currentUser.id,task_id:taskId,
+uid:uid.trim(),proof_path:path,status:"pending"
+});
+if(ins.error){
+await db.storage.from("task-proofs").remove([path]);
+return msg("taskMessage","Submission failed: "+ins.error.message,"error");
+}
+msg("taskMessage","Your proof has been submitted for administrator review.","success");
+await loadDashboard();
+};
+fileInput.click();
+}
+
+async function loadWallet(){
+const [r,s]=await Promise.all([
+db.from("reward_transactions").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+db.from("task_submissions").select("*,tasks(title)").eq("user_id",currentUser.id).order("created_at",{ascending:false})
+]);
+$("rewardsRows").innerHTML=(r.data||[]).map(x=>`<tr><td>${new Date(x.created_at).toLocaleDateString()}</td><td>${esc(x.reward_type)}</td><td>${money(x.amount)}</td></tr>`).join("")||"<tr><td colspan='3'>No rewards yet.</td></tr>";
+$("submissionRows").innerHTML=(s.data||[]).map(x=>`<tr><td>${esc(x.tasks?.title||"Task")}</td><td>${esc(x.uid)}</td><td><span class="pill ${x.status==="approved"?"ok":x.status==="rejected"?"no":"wait"}">${esc(x.status)}</span></td><td>${esc(x.rejection_reason||"—")}</td></tr>`).join("")||"<tr><td colspan='4'>No submissions yet.</td></tr>";
+}
+
+async function loadReferral(){
+const code=profile?.referral_code||"";
+$("refCode").textContent=code||"Not assigned";
+$("refLink").value=code?`${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`:"";
+$("copyRef").onclick=async()=>{
+if(!$("refLink").value)return;
+await navigator.clipboard.writeText($("refLink").value);
+alert("Referral link copied.");
+};
+}
+
+function accountInputs(){
+const m=$("withdrawMethod").value;
+let fields=m==="PayPal"
+?'<label>PayPal email</label><input id="payEmail" type="email" required>'
+:m==="TON Wallet"
+?'<label>TON public wallet address</label><input id="tonAddress" required>'
+:'<label>Account number</label><input id="bankNumber" inputmode="numeric" required><label>Account holder name</label><input id="holderName" required>';
+$("accountFields").innerHTML=fields;
+}
+$("withdrawMethod").onchange=accountInputs;
+accountInputs();
+
+$("withdrawForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const method=$("withdrawMethod").value;
+let details=method==="PayPal"?{email:$("payEmail").value.trim()}
+:method==="TON Wallet"?{wallet_address:$("tonAddress").value.trim()}
+:{account_number:$("bankNumber").value.trim(),account_name:$("holderName").value.trim()};
+const amount=Number($("withdrawAmount").value);
+if(!Number.isFinite(amount)||amount<=0)return msg("withdrawMessage","Enter a valid amount.","error");
+const {error}=await db.from("withdrawal_requests").insert({
+user_id:currentUser.id,method,amount,account_details:details,status:"pending"
+});
+if(error)msg("withdrawMessage",error.message,"error");
+else{
+msg("withdrawMessage","Withdrawal request submitted for manual review.","success");
+e.target.reset();accountInputs();loadWithdrawals();
+}
+});
+
+async function loadWithdrawals(){
+const {data,error}=await db.from("withdrawal_requests").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
+$("withdrawRows").innerHTML=error?esc(error.message):(data||[]).map(x=>`<p>${money(x.amount)} · ${esc(x.method)} · <span class="pill">${esc(x.status)}</span></p>`).join("")||"No withdrawal requests yet.";
+}
+
+$("taskForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const {error}=await db.from("tasks").insert({
+title:$("newTaskTitle").value.trim(),
+description:$("newTaskDesc").value.trim(),
+instructions:$("newTaskInstructions").value.trim(),
+reward:Number($("newTaskReward").value),
+duration_minutes:Number($("newTaskDuration").value),
+category:$("newTaskCategory").value.trim(),
+is_active:true
+});
+msg("adminTaskMessage",error?error.message:"Task created.",error?"error":"success");
+if(!error){e.target.reset();loadTasks();}
+});
+
+async function loadAdmin(){
+if(!isAdmin)return;
+const {data,error}=await db.from("task_submissions")
+.select("id,user_id,task_id,uid,proof_path,status,created_at")
+.eq("status","pending").order("created_at",{ascending:true});
+if(error){$("adminSubmissions").textContent=error.message;return;}
+const taskIds=[...new Set((data||[]).map(x=>x.task_id))];
+let tasks={};
+if(taskIds.length){
+const t=await db.from("tasks").select("id,title").in("id",taskIds);
+(t.data||[]).forEach(x=>tasks[x.id]=x.title);
+}
+const users=[...new Set((data||[]).map(x=>x.user_id))];
+let names={};
+if(users.length){
+const p=await db.from("profiles").select("id,full_name").in("id",users);
+(p.data||[]).forEach(x=>names[x.id]=x.full_name);
+}
+$("adminSubmissions").innerHTML=(data||[]).map(x=>`
+<div class="task">
+<b>${esc(tasks[x.task_id]||"Task")}</b>
+<p>${esc(names[x.user_id]||x.user_id)} · UID: ${esc(x.uid)}</p>
+<button class="outline proofBtn" data-path="${esc(x.proof_path)}">View screenshot</button>
+<button class="primary approveBtn" data-id="${esc(x.id)}">Approve</button>
+<button class="danger rejectBtn" data-id="${esc(x.id)}">Reject</button>
+</div>`).join("")||"No pending submissions.";
+
+document.querySelectorAll(".proofBtn").forEach(b=>b.onclick=async()=>{
+const {data,error}=await db.storage.from("task-proofs").createSignedUrl(b.dataset.path,120);
+if(error)alert(error.message);else window.open(data.signedUrl,"_blank");
+});
+document.querySelectorAll(".approveBtn").forEach(b=>b.onclick=async()=>{
+if(!confirm("Approve this submission and credit its reward?"))return;
+const {error}=await db.rpc("admin_approve_submission",{p_submission_id:b.dataset.id});
+if(error)alert(error.message);
+else{alert("Submission approved.");loadAdmin();loadDashboard();}
+});
+document.querySelectorAll(".rejectBtn").forEach(b=>b.onclick=async()=>{
+const reason=prompt("Enter a rejection reason:");
+if(!reason?.trim())return;
+const {error}=await db.rpc("admin_reject_submission",{p_submission_id:b.dataset.id,p_reason:reason.trim()});
+if(error)alert(error.message);
+else{alert("Submission rejected.");loadAdmin();}
+});
+
+const w=await db.from("withdrawal_requests").select("*").eq("status","pending").order("created_at",{ascending:true});
+$("adminWithdrawals").innerHTML=w.error?esc(w.error.message):(w.data||[]).map(x=>`
+<div class="task">
+<b>${money(x.amount)} · ${esc(x.method)}</b>
+<p class="small">${esc(JSON.stringify(x.account_details))}</p>
+<button class="primary paidBtn" data-id="${esc(x.id)}">Mark paid</button>
+<button class="danger failBtn" data-id="${esc(x.id)}">Reject</button>
+</div>`).join("")||"No pending withdrawals.";
+
+document.querySelectorAll(".paidBtn,.failBtn").forEach(b=>b.onclick=async()=>{
+const status=b.classList.contains("paidBtn")?"paid":"rejected";
+if(!confirm(`Mark request ${status}?`))return;
+const {error}=await db.rpc("admin_set_withdrawal_status",{
+p_withdrawal_id:b.dataset.id,p_status:status,p_admin_notes:null
+});
+if(error)alert(error.message);else loadAdmin();
+});
+}
+
+$("refreshTasks").onclick=loadTasks;
+boot();
 </script>
-
 </body>
 </html>
