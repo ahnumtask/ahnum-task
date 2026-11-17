@@ -1,1053 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AHNUM TASK | Work. Earn. Withdraw.</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-:root{
-  --navy:#08172e;--navy2:#102746;--gold:#e8b84d;
-  --bg:#f5f7fb;--ink:#15243a;--muted:#718096;
-  --line:#e5eaf1;--green:#16865b;--red:#c44747
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:bold}
-.primary{background:var(--gold);color:#171717}
-.dark{background:var(--navy);color:white}
-.outline{background:white;border:1px solid var(--line);color:var(--ink)}
-.danger{background:#fff0f0;color:var(--red)}
-.hidden{display:none!important}
-
-header{
-  background:linear-gradient(120deg,var(--navy),var(--navy2));
-  color:white;padding:18px max(18px,calc((100% - 1100px)/2));
-  display:flex;align-items:center;justify-content:space-between;
-  gap:14px;position:relative;flex-wrap:nowrap
-}
-.brand{font-weight:900;letter-spacing:1px;font-size:22px}
-.brand span,.gold{color:var(--gold)}
-.tag{font-size:11px;letter-spacing:2px;color:#d6deea;margin-top:4px}
-.menu-toggle{display:block;margin-left:auto;background:var(--gold);color:var(--navy);font-size:24px;padding:8px 14px;border-radius:9px}
-nav{display:none;position:absolute;top:75px;right:16px;z-index:1000;background:var(--navy2);border:1px solid #ffffff30;border-radius:12px;padding:10px;min-width:210px;box-shadow:0 8px 25px #0003;flex-direction:column;gap:4px}
-nav.open{display:flex}
-nav button{width:100%;text-align:left;background:transparent;color:#eaf0f8;padding:12px}
-nav button.active{background:#ffffff18;color:var(--gold)}
-main{max-width:1100px;margin:24px auto;padding:0 16px}
-.hero{background:linear-gradient(120deg,#0a1a32,#183b61);border-radius:20px;color:white;padding:30px;margin-bottom:20px}
-.hero h1{font-size:clamp(27px,5vw,42px);margin:0 0 10px}
-.hero p{color:#d7e0eb;max-width:620px;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.card,.task{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #0c23400a}
-.card h2,.card h3{margin-top:0}
-.task a{color:#1769aa;text-decoration:underline;font-weight:bold;overflow-wrap:anywhere;cursor:pointer}
-.stat{font-size:27px;font-weight:900;color:var(--navy)}
-.label{font-size:12px;color:var(--muted);margin-bottom:6px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-input,select,textarea{width:100%;padding:12px;border:1px solid #d9e1eb;border-radius:10px;background:white;margin:5px 0 12px;color:var(--ink)}
-textarea{min-height:90px}
-label{font-size:13px;font-weight:bold;display:block}
-.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.pill{display:inline-block;border-radius:30px;padding:5px 9px;font-size:11px;font-weight:bold;background:#eef3f8;color:#40536b}
-.pill.ok{background:#e7f7ef;color:var(--green)}
-.pill.wait{background:#fff5df;color:#94650a}
-.pill.no{background:#fff0f0;color:var(--red)}
-.notice{padding:12px;border-radius:10px;background:#fff8e8;color:#77530d;margin:12px 0;font-size:13px;line-height:1.5}
-.success{background:#eaf8f0;color:#14623f}
-.error{background:#fff0f0;color:#a42d2d}
-.small{font-size:12px;color:var(--muted)}
-.tablewrap{overflow:auto}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--muted)}
-.auth{max-width:480px;margin:25px auto}
-.foot{text-align:center;padding:24px;color:var(--muted);font-size:12px}
-.otp-input{text-align:center;font-size:28px;letter-spacing:12px;font-weight:bold;max-width:280px;margin:15px auto}
-.otp-box{text-align:center}
-
-/* TASK CARDS IN MULTIPLE ROWS AND COLUMNS */
-#tasksList{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
-  gap:16px;
-  align-items:start
-}
-.task-card{
-  margin:0;
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  gap:10px
-}
-.task-card h3{margin:0;font-size:18px;overflow-wrap:anywhere}
-.task-description{font-size:14px;line-height:1.6;color:#526176;overflow-wrap:anywhere;margin:0}
-.task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.task-open-button{flex-shrink:0;min-width:78px}
-.task-reward{font-weight:900;color:var(--navy);font-size:17px}
-.task-naira{font-size:13px;color:var(--green);font-weight:bold;margin-top:4px}
-.task-link-panel{background:#f5f8fc;border:1px solid var(--line);border-radius:10px;padding:12px}
-.task-link-panel a{display:block;overflow-wrap:anywhere;line-height:1.5}
-.task-timer{font-size:13px;font-weight:bold;color:#94650a}
-.proof-form{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
-.proof-form button{width:100%}
-.proof-form input[type=file]{font-size:12px}
-.task-status{font-size:12px;color:var(--muted)}
-@media(max-width:600px){
-  header{padding:15px}
-  nav{top:68px;right:15px}
-  .hero{padding:22px}
-  #tasksList{grid-template-columns:1fr}
-}
-</style>
-</head>
-
-<body>
-<header>
-  <div>
-    <div class="brand">AHNUM <span>TASK</span></div>
-    <div class="tag">WORK. EARN. WITHDRAW.</div>
-  </div>
-  <button id="menuToggle" class="menu-toggle hidden" type="button" aria-label="Open menu">☰</button>
-  <nav id="nav" class="hidden">
-    <button data-page="home" class="active">Dashboard</button>
-    <button data-page="tasks">Available Tasks</button>
-    <button data-page="wallet">Wallet</button>
-    <button data-page="invite">Invite Friends</button>
-    <button data-page="withdraw">Withdraw</button>
-    <button data-page="account">Account</button>
-    <button data-page="admin" id="adminNav" class="hidden">Admin Dashboard</button>
-    <button id="logoutBtn">Log out</button>
-  </nav>
-</header>
-
-<main>
-<section id="authView" class="auth card">
-  <h2>Welcome to AHNUM TASK</h2>
-  <p class="small">Create an account or sign in to access available tasks and rewards.</p>
-
-  <div class="row" id="authChoices">
-    <button id="showLogin" class="dark">Log in</button>
-    <button id="showSignup" class="outline">Create account</button>
-  </div>
-
-  <form id="loginForm" class="hidden">
-    <h3>Log in</h3>
-    <label>Email address</label>
-    <input id="loginEmail" type="email" required>
-    <label>Password</label>
-    <input id="loginPassword" type="password" required>
-    <button class="primary" type="submit">Log in</button>
-  </form>
-
-  <form id="signupForm">
-    <h3>Create your account</h3>
-    <label>Full name</label>
-    <input id="fullName" autocomplete="name" required>
-    <label>Email address</label>
-    <input id="signupEmail" type="email" autocomplete="email" required>
-    <label>Password</label>
-    <input id="signupPassword" type="password" minlength="8" autocomplete="new-password" required>
-    <p class="small">Use at least 8 characters. A six-digit verification code will be sent to your email.</p>
-    <button class="primary" type="submit">Register</button>
-  </form>
-
-  <section id="otpSection" class="hidden otp-box">
-    <h3>Verify your email</h3>
-    <p class="small">We sent a six-digit verification code to:</p>
-    <p><strong id="otpEmail"></strong></p>
-    <form id="otpForm">
-      <label for="otpCode">Enter your 6-digit code</label>
-      <input id="otpCode" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
-      <button class="primary" type="submit">Verify email</button>
-    </form>
-    <button class="outline" id="resendOtp" type="button">Resend verification code</button>
-    <button class="outline" id="backToSignup" type="button">Back to registration</button>
-  </section>
-  <div id="authMessage" aria-live="polite"></div>
-</section>
-
-<section id="appView" class="hidden">
-  <section class="hero">
-    <div class="gold">WELCOME TO AHNUM TASK</div>
-    <h1>Complete tasks.<br><span class="gold">Earn rewards.</span></h1>
-    <p>Explore available tasks, submit your proof, and track your approved rewards from your account.</p>
-    <button class="primary" data-goto="tasks">Explore tasks</button>
-  </section>
-
-  <div class="grid">
-    <div class="card"><div class="label">Available balance</div><div class="stat" id="balance">0 TON</div></div>
-    <div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCount">0</div></div>
-    <div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCount">0</div></div>
-  </div>
-
-  <section id="page-home" class="page">
-    <div class="card">
-      <h2>Your dashboard</h2>
-      <div id="recentActivity" class="small">Your recent activity will appear here.</div>
-    </div>
-  </section>
-
-  <section id="page-tasks" class="page hidden">
-    <div class="row">
-      <h2>Available tasks</h2>
-      <button class="outline" id="refreshTasks">Refresh</button>
-    </div>
-    <div id="tasksList"></div>
-    <div id="taskMessage"></div>
-  </section>
-
-  <section id="page-wallet" class="page hidden">
-    <div class="card">
-      <h2>Reward history</h2>
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
-          <tbody id="rewardsRows"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <h2>My submissions</h2>
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th>Task</th><th>UID</th><th>Status</th><th>Admin note</th></tr></thead>
-          <tbody id="submissionRows"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <section id="page-invite" class="page hidden">
-    <div class="card">
-      <h2>Invite friends</h2>
-      <p>Share your referral link. You earn a referral reward when an invited member completes at least two tasks approved by an administrator.</p>
-      <div class="label">Your referral code</div>
-      <div class="row">
-        <strong id="refCode">—</strong>
-        <button class="outline" id="copyRef">Copy link</button>
-      </div>
-      <input id="refLink" readonly>
-      <div id="refMessage"></div>
-    </div>
-
-    <div class="grid">
-      <div class="card"><div class="label">Total invited members</div><div class="stat" id="refTotal">0</div></div>
-      <div class="card"><div class="label">Pending referrals</div><div class="stat" id="refPending">0</div></div>
-      <div class="card"><div class="label">Approved referrals</div><div class="stat" id="refApproved">0</div></div>
-      <div class="card"><div class="label">Approved tasks by referrals</div><div class="stat" id="refTasks">0</div></div>
-      <div class="card"><div class="label">Referral earnings</div><div class="stat" id="refEarnings">0 TON</div></div>
-    </div>
-
-    <div class="card">
-      <h2>People you invited</h2>
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th>Full name</th><th>Date joined</th><th>Approved tasks</th><th>Status</th></tr></thead>
-          <tbody id="referralRows"><tr><td colspan="4">Loading referrals…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <section id="page-withdraw" class="page hidden">
-    <div class="card">
-      <h2>Request a withdrawal</h2>
-      <div class="notice">Withdrawal requests are reviewed manually. Submitting a request does not send money automatically. Never enter a wallet recovery phrase or private key.</div>
-      <form id="withdrawForm">
-        <label>Amount (TON)</label>
-        <input id="withdrawAmount" type="number" min="0.000001" step="0.000001" required>
-        <label>Payment method</label>
-        <select id="withdrawMethod">
-          <option value="OPay">OPay</option>
-          <option value="PalmPay">PalmPay</option>
-          <option value="PayPal">PayPal</option>
-          <option value="TON Wallet">TON Wallet</option>
-        </select>
-        <div id="accountFields"></div>
-        <button class="primary">Submit withdrawal request</button>
-      </form>
-      <div id="withdrawMessage"></div>
-    </div>
-    <div class="card">
-      <h3>My withdrawal requests</h3>
-      <div id="withdrawRows"></div>
-    </div>
-  </section>
-
-  <section id="page-account" class="page hidden">
-    <div class="card">
-      <h2>Account</h2>
-      <div id="accountInfo"></div>
-    </div>
-  </section>
-
-  <section id="page-admin" class="page hidden">
-    <div class="card">
-      <h2>Admin — create a task</h2>
-      <form id="taskForm">
-        <label>Task title</label>
-        <input id="newTaskTitle" required>
-        <label>Description</label>
-        <textarea id="newTaskDesc" required></textarea>
-        <label>Instructions</label>
-        <textarea id="newTaskInstructions"></textarea>
-        <div class="formgrid">
-          <div>
-            <label>Reward (TON)</label>
-            <input id="newTaskReward" type="number" min="0" step="0.000001" required>
-          </div>
-          <div>
-            <label>Duration (minutes)</label>
-            <input id="newTaskDuration" type="number" min="1" value="30">
-          </div>
-          <div>
-            <label>Category</label>
-            <input id="newTaskCategory" value="General">
-          </div>
-        </div>
-        <button class="primary">Create task</button>
-      </form>
-      <div id="adminTaskMessage"></div>
-    </div>
-
-    <div class="card">
-      <h2>Review submissions</h2>
-      <div id="adminSubmissions" class="tablewrap"></div>
-    </div>
-
-    <div class="card">
-      <h2>Withdrawal requests</h2>
-      <div id="adminWithdrawals" class="tablewrap"></div>
-    </div>
-  </section>
-</section>
-
-<div id="globalMessage" aria-live="polite"></div>
-</main>
-
-<div class="foot">
-  AHNUM TASK · WORK. EARN. WITHDRAW. ·
-  <a href="https://wa.me/message/XS4F7ZQ3IR2CO1">WhatsApp Support</a> ·
-  <a href="https://t.me/ahnumtask">Telegram</a>
-</div>
-
-<script>
-const SUPABASE_URL="https://qvtyinfpsckvbojouapk.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_3RaREsT5T9li9zPVVi3kYQ_wCUc7Ji1";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
-/* CHANGE THIS VALUE IF YOU WANT A DIFFERENT NAIRA DISPLAY RATE */
-const TON_NGN_RATE=1400;
-const TASK_WAIT_SECONDS=60;
-
-let currentUser=null,profile=null,isAdmin=false;
-let pendingEmail="",pendingName="",pendingPassword="";
-const $=id=>document.getElementById(id);
-const taskIntervals={};
-
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[c]));
-
-function money(n){
-  return Number(n||0).toFixed(6).replace(/0+$/,"").replace(/\.$/,"")+" TON";
-}
-
-function naira(n){
-  return new Intl.NumberFormat("en-NG",{
-    style:"currency",currency:"NGN",maximumFractionDigits:0
-  }).format(Number(n||0)*TON_NGN_RATE);
-}
-
-function msg(id,text,type=""){
-  const el=$(id);
-  if(el){
-    el.className="notice "+type;
-    el.textContent=text;
-  }
-}
-
-function linkify(s){
-  return esc(s).replace(
-    /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi,
-    match=>{
-      const url=match.replace(/[.,!?;:)]+$/,"");
-      const extra=match.slice(url.length);
-      const href=url.startsWith("www.")?"https://"+url:url;
-      return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>${extra}`;
-    }
-  );
-}
-
-/* TASK LINK AND TIMER HELPERS */
-function findTaskUrl(text){
-  const match=String(text||"").match(/(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/i);
-  if(!match)return "";
-  let url=match[0].replace(/[.,!?;:)]+$/,"");
-  if(url.startsWith("www."))url="https://"+url;
-  try{
-    const parsed=new URL(url);
-    if(parsed.protocol!=="https:"&&parsed.protocol!=="http:")return "";
-    return parsed.href;
-  }catch{return ""}
-}
-
-function getTaskUrl(task){
-  return findTaskUrl(task.instructions)||findTaskUrl(task.description);
-}
-
-function removeTaskUrls(text){
-  return String(text||"")
-    .replace(/https?:\/\/[^\s<>"']+|www\.[^\s<>"']+/gi,"")
-    .replace(/\s+/g," ")
-    .trim();
-}
-
-function taskTimerKey(taskId){
-  return `ahnum_task_click_${currentUser.id}_${taskId}`;
-}
-
-function getTaskClickTime(taskId){
-  return Number(localStorage.getItem(taskTimerKey(taskId))||0);
-}
-
-function formatRemaining(seconds){
-  const s=Math.max(0,Math.ceil(seconds));
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
-}
-
-function updateTaskTimer(taskId,card){
-  const clickedAt=getTaskClickTime(taskId);
-  const timer=card.querySelector(".task-timer");
-  const proof=card.querySelector(".proof-form");
-  const link=card.querySelector(".task-link-panel");
-
-  if(!clickedAt){
-    if(timer)timer.textContent="Click the task link to start the 60-second timer.";
-    if(proof)proof.classList.add("hidden");
-    return;
-  }
-
-  const elapsed=(Date.now()-clickedAt)/1000;
-  const remaining=TASK_WAIT_SECONDS-elapsed;
-
-  if(remaining>0){
-    if(timer)timer.textContent="Time remaining: "+formatRemaining(remaining);
-    if(proof)proof.classList.add("hidden");
-  }else{
-    if(timer)timer.textContent="Time completed. You can now submit your proof.";
-    if(proof)proof.classList.remove("hidden");
-  }
-}
-
-function startTaskTimer(taskId,card){
-  if(taskIntervals[taskId])clearInterval(taskIntervals[taskId]);
-  updateTaskTimer(taskId,card);
-  taskIntervals[taskId]=setInterval(()=>{
-    if(!document.body.contains(card)){
-      clearInterval(taskIntervals[taskId]);
-      delete taskIntervals[taskId];
-      return;
-    }
-    updateTaskTimer(taskId,card);
-  },1000);
-}
-
-function showAuth(mode="signup"){
-  $("authView").classList.remove("hidden");
-  $("appView").classList.add("hidden");
-  $("nav").classList.add("hidden");
-  $("menuToggle").classList.add("hidden");
-  $("nav").classList.remove("open");
-  $("authChoices").classList.remove("hidden");
-  $("signupForm").classList.toggle("hidden",mode!=="signup");
-  $("loginForm").classList.toggle("hidden",mode!=="login");
-  $("otpSection").classList.add("hidden");
-}
-
-function showOtp(email){
-  $("signupForm").classList.add("hidden");
-  $("loginForm").classList.add("hidden");
-  $("authChoices").classList.add("hidden");
-  $("otpSection").classList.remove("hidden");
-  $("otpEmail").textContent=email;
-  $("otpCode").value="";
-  $("otpCode").focus();
-}
-
-function showApp(){
-  $("authView").classList.add("hidden");
-  $("appView").classList.remove("hidden");
-  $("nav").classList.remove("hidden");
-  $("menuToggle").classList.remove("hidden");
-  $("nav").classList.remove("open");
-}
-
-$("menuToggle").onclick=()=> $("nav").classList.toggle("open");
-
-function page(name){
-  if(name==="admin"&&!isAdmin){
-    alert("Access denied.");
-    return;
-  }
-  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
-  $("page-"+name)?.classList.remove("hidden");
-  document.querySelectorAll("nav [data-page]").forEach(x=>{
-    x.classList.toggle("active",x.dataset.page===name);
-  });
-  $("nav").classList.remove("open");
-  if(name==="tasks")loadTasks();
-  if(name==="wallet")loadWallet();
-  if(name==="invite")loadReferral();
-  if(name==="withdraw")loadWithdrawals();
-  if(name==="admin"&&isAdmin)loadAdmin();
-}
-
-document.querySelectorAll("nav [data-page]").forEach(b=>{
-  b.addEventListener("click",()=>page(b.dataset.page));
-});
-document.querySelectorAll("[data-goto]").forEach(b=>{
-  b.addEventListener("click",()=>page(b.dataset.goto));
-});
-
-$("showLogin").onclick=()=>showAuth("login");
-$("showSignup").onclick=()=>showAuth("signup");
-
-$("signupForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const email=$("signupEmail").value.trim().toLowerCase();
-  const password=$("signupPassword").value;
-  const fullName=$("fullName").value.trim();
-
-  if(!fullName)return msg("authMessage","Please enter your full name.","error");
-  if(password.length<8)return msg("authMessage","Password must contain at least 8 characters.","error");
-
-  pendingEmail=email;
-  pendingName=fullName;
-  pendingPassword=password;
-  msg("authMessage","Creating your account and sending your verification code…");
-
-  const ref=new URLSearchParams(location.search).get("ref");
-  const {data,error}=await db.auth.signUp({
-    email,password,
-    options:{data:{full_name:fullName,referral_code:ref||null}}
-  });
-
-  if(error){
-    pendingPassword="";
-    return msg("authMessage",error.message,"error");
-  }
-  if(data.session){
-    pendingPassword="";
-    await enter(data.user);
-    return;
-  }
-  if(!data.user){
-    pendingPassword="";
-    return msg("authMessage","Registration could not be completed. Please try again.","error");
-  }
-  showOtp(email);
-  msg("authMessage","Your account has been created. Enter the six-digit code sent to your email.","success");
-});
-
-$("otpForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const token=$("otpCode").value.trim();
-  if(!/^[0-9]{6}$/.test(token)){
-    return msg("authMessage","Please enter a valid six-digit verification code.","error");
-  }
-  msg("authMessage","Verifying your email…");
-  const {data,error}=await db.auth.verifyOtp({email:pendingEmail,token,type:"signup"});
-  if(error)return msg("authMessage","Verification failed: "+error.message,"error");
-
-  pendingPassword="";
-  pendingEmail="";
-  pendingName="";
-  msg("authMessage","Email verified successfully. Your account is ready.","success");
-  if(data.user)await enter(data.user);
-  else{
-    showAuth("login");
-    msg("authMessage","Email verified. Please log in.","success");
-  }
-});
-
-$("resendOtp").onclick=async()=>{
-  if(!pendingEmail)return msg("authMessage","Please register again to request a code.","error");
-  msg("authMessage","Sending a new verification code…");
-  const {error}=await db.auth.resend({type:"signup",email:pendingEmail});
-  if(error)return msg("authMessage",error.message,"error");
-  msg("authMessage","A new verification code has been requested. Check your inbox and spam folder.","success");
-};
-
-$("backToSignup").onclick=()=>{
-  showAuth("signup");
-  msg("authMessage","You can return to registration.","");
-};
-
-$("loginForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  msg("authMessage","Signing in…");
-  const {error}=await db.auth.signInWithPassword({
-    email:$("loginEmail").value.trim(),
-    password:$("loginPassword").value
-  });
-  if(error)msg("authMessage",error.message,"error");
-});
-
-$("logoutBtn").onclick=async()=>{
-  await db.auth.signOut();
-  currentUser=null;profile=null;isAdmin=false;
-  showAuth("login");
-};
-
-async function boot(){
-  const {data:{session}}=await db.auth.getSession();
-  if(session)await enter(session.user);
-  else showAuth();
-  db.auth.onAuthStateChange((event,session)=>{
-    if(event==="SIGNED_IN"&&session)enter(session.user);
-    if(event==="SIGNED_OUT")showAuth("login");
-  });
-}
-
-async function enter(user){
-  currentUser=user;
-  showApp();
-  await loadProfile();
-  await loadDashboard();
-  page("home");
-}
-
-async function loadProfile(){
-  const {data,error}=await db.from("profiles")
-    .select("*").eq("id",currentUser.id).maybeSingle();
-  if(error){
-    msg("globalMessage","Could not load profile: "+error.message,"error");
-    return;
-  }
-  profile=data;
-  const role=await db.from("user_roles")
-    .select("role").eq("user_id",currentUser.id).maybeSingle();
-  isAdmin=role.data?.role==="admin";
-  $("adminNav").classList.toggle("hidden",!isAdmin);
-  $("accountInfo").innerHTML=`
-    <p><b>Name:</b> ${esc(profile?.full_name||currentUser.user_metadata?.full_name||"Member")}</p>
-    <p><b>Email:</b> ${esc(currentUser.email)}</p>
-    <p><b>Referral code:</b> ${esc(profile?.referral_code||"Not assigned")}</p>
-  `;
-}
-
-async function loadDashboard(){
-  const [rw,sub]=await Promise.all([
-    db.from("reward_transactions").select("amount").eq("user_id",currentUser.id),
-    db.from("task_submissions").select("status").eq("user_id",currentUser.id)
-  ]);
-  if(rw.error||sub.error){
-    msg("globalMessage","Dashboard data could not load. Check the database setup and policies.","error");
-    return;
-  }
-  const total=(rw.data||[]).reduce((s,r)=>s+Number(r.amount||0),0);
-  $("balance").textContent=money(total);
-  $("approvedCount").textContent=(sub.data||[]).filter(x=>x.status==="approved").length;
-  $("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").length;
-}
-
-/* UPDATED TASK LIST AND TASK CARD WORKFLOW */
-async function loadTasks(){
-  Object.values(taskIntervals).forEach(clearInterval);
-  Object.keys(taskIntervals).forEach(k=>delete taskIntervals[k]);
-
-  const box=$("tasksList");
-  box.innerHTML="Loading tasks…";
-
-  const {data,error}=await db.from("tasks")
-    .select("*")
-    .eq("is_active",true)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    box.innerHTML=`<p class="notice error">Could not load tasks: ${esc(error.message)}</p>`;
-    return;
-  }
-  if(!data?.length){
-    box.innerHTML="<p class='small'>There are no active tasks right now.</p>";
-    return;
-  }
-
-  box.innerHTML=data.map(t=>{
-    const url=getTaskUrl(t);
-    const cleanDescription=removeTaskUrls(t.description)||"Complete this task and follow the link provided.";
-    const safeUrl=esc(url);
-    const taskId=esc(t.id);
-
-    return `
-      <article class="task task-card" data-task-card="${taskId}">
-        <div class="task-top">
-          <div>
-            <h3>${esc(t.title)}</h3>
-          </div>
-          <button class="primary task-open-button openTask" type="button" data-id="${taskId}">
-            Open
-          </button>
-        </div>
-
-        <p class="task-description">${esc(cleanDescription)}</p>
-
-        <div>
-          <div class="task-reward">${money(t.reward)}</div>
-          <div class="task-naira">${naira(t.reward)}</div>
-        </div>
-
-        <div class="task-link-panel hidden">
-          ${
-            url
-            ? `<p class="small">Click the link below to open the task:</p>
-               <a class="externalTaskLink" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Open Twitter / X task link</a>`
-            : `<p class="small">No link was found for this task. Please contact the administrator.</p>`
-          }
-          <p class="task-timer">Click the task link to start the 60-second timer.</p>
-        </div>
-
-        <form class="proof-form hidden" data-task-id="${taskId}">
-          <h4>Submit your proof</h4>
-          <label>Twitter username, UID or task code</label>
-          <input name="uid" type="text" maxlength="200" placeholder="Enter your username or UID" required>
-          <label>Upload screenshot proof</label>
-          <input name="proof" type="file" accept="image/png,image/jpeg,image/webp" required>
-          <p class="small">PNG, JPG or WEBP. Maximum file size: 5 MB.</p>
-          <button class="primary" type="submit">Submit Proof</button>
-          <div class="task-status" aria-live="polite"></div>
-        </form>
-      </article>
-    `;
-  }).join("");
-
-  box.querySelectorAll(".openTask").forEach(button=>{
-    button.addEventListener("click",()=>{
-      const card=button.closest(".task-card");
-      const panel=card.querySelector(".task-link-panel");
-      panel.classList.remove("hidden");
-      button.textContent="Opened";
-      button.disabled=true;
-      const url=card.querySelector(".externalTaskLink");
-      if(!url){
-        card.querySelector(".task-timer").textContent="This task has no configured external link.";
-        return;
-      }
-      startTaskTimer(button.dataset.id,card);
-    });
-  });
-
-  box.querySelectorAll(".externalTaskLink").forEach(link=>{
-    link.addEventListener("click",()=>{
-      const card=link.closest(".task-card");
-      const taskId=card.dataset.taskCard;
-      let clickedAt=getTaskClickTime(taskId);
-
-      /* Start the timer only on the first click of the external link. */
-      if(!clickedAt){
-        clickedAt=Date.now();
-        localStorage.setItem(taskTimerKey(taskId),String(clickedAt));
-      }
-      startTaskTimer(taskId,card);
-    });
-  });
-
-  box.querySelectorAll(".proof-form").forEach(form=>{
-    form.addEventListener("submit",submitTaskProof);
-  });
-
-  /* Restore timers and opened links after a page refresh. */
-  box.querySelectorAll(".task-card").forEach(card=>{
-    const taskId=card.dataset.taskCard;
-    const clickedAt=getTaskClickTime(taskId);
-    if(clickedAt){
-      card.querySelector(".task-link-panel").classList.remove("hidden");
-      const openButton=card.querySelector(".openTask");
-      openButton.textContent="Opened";
-      openButton.disabled=true;
-      startTaskTimer(taskId,card);
-    }
-  });
-}
-
-async function submitTaskProof(e){
-  e.preventDefault();
-  const form=e.currentTarget;
-  const taskId=form.dataset.taskId;
-  const card=form.closest(".task-card");
-  const status=form.querySelector(".task-status");
-  const button=form.querySelector("button[type=submit]");
-  const uid=form.elements.uid.value.trim();
-  const file=form.elements.proof.files[0];
-  const clickedAt=getTaskClickTime(taskId);
-
-  if(!clickedAt){
-    status.textContent="Open the task link before submitting proof.";
-    return;
-  }
-
-  const elapsed=(Date.now()-clickedAt)/1000;
-  if(elapsed<TASK_WAIT_SECONDS){
-    status.textContent="Please wait "+formatRemaining(TASK_WAIT_SECONDS-elapsed)+" before submitting proof.";
-    updateTaskTimer(taskId,card);
-    return;
-  }
-
-  if(!uid){
-    status.textContent="Please enter your username or UID.";
-    return;
-  }
-  if(!file){
-    status.textContent="Please upload your screenshot.";
-    return;
-  }
-  if(!["image/png","image/jpeg","image/webp"].includes(file.type)){
-    status.textContent="Only PNG, JPG or WEBP screenshots are allowed.";
-    return;
-  }
-  if(file.size>5*1024*1024){
-    status.textContent="Screenshot must be 5 MB or smaller.";
-    return;
-  }
-
-  button.disabled=true;
-  status.textContent="Uploading screenshot and submitting your proof…";
-
-  const ext=file.type==="image/jpeg"?"jpg":file.type==="image/webp"?"webp":"png";
-  const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
-
-  try{
-    const up=await db.storage.from("task-proofs").upload(path,file,{
-      contentType:file.type,
-      upsert:false
-    });
-
-    if(up.error){
-      status.textContent="Screenshot upload failed: "+up.error.message;
-      button.disabled=false;
-      return;
-    }
-
-    const ins=await db.from("task_submissions").insert({
-      id:crypto.randomUUID(),
-      user_id:currentUser.id,
-      task_id:taskId,
-      uid:uid,
-      proof_path:path,
-      status:"pending"
-    });
-
-    if(ins.error){
-      await db.storage.from("task-proofs").remove([path]);
-      status.textContent="Submission failed: "+ins.error.message;
-      button.disabled=false;
-      return;
-    }
-
-    status.textContent="Your proof has been submitted successfully for administrator review.";
-    form.querySelectorAll("input").forEach(input=>input.disabled=true);
-    button.textContent="Proof Submitted";
-    msg("taskMessage","Your proof has been submitted for administrator review.","success");
-    await loadDashboard();
-
-  }catch(error){
-    status.textContent="An unexpected error occurred: "+error.message;
-    button.disabled=false;
-  }
-}
-
-async function loadWallet(){
-  const [r,s]=await Promise.all([
-    db.from("reward_transactions").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
-    db.from("task_submissions").select("*,tasks(title)").eq("user_id",currentUser.id).order("created_at",{ascending:false})
-  ]);
-
-  $("rewardsRows").innerHTML=(r.data||[]).map(x=>`
-    <tr>
-      <td>${new Date(x.created_at).toLocaleDateString()}</td>
-      <td>${esc(x.reward_type)}</td>
-      <td>${money(x.amount)}</td>
-    </tr>
-  `).join("")||"<tr><td colspan='3'>No rewards yet.</td></tr>";
-
-  $("submissionRows").innerHTML=(s.data||[]).map(x=>`
-    <tr>
-      <td>${esc(x.tasks?.title||"Task")}</td>
-      <td>${esc(x.uid)}</td>
-      <td><span class="pill ${x.status==="approved"?"ok":x.status==="rejected"?"no":"wait"}">${esc(x.status)}</span></td>
-      <td>${esc(x.rejection_reason||"—")}</td>
-    </tr>
-  `).join("")||"<tr><td colspan='4'>No submissions yet.</td></tr>";
-}
-
-async function loadReferral(){
-  const code=profile?.referral_code||"";
-  $("refCode").textContent=code||"Not assigned";
-  $("refLink").value=code?`${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`:"";
-  $("referralRows").innerHTML="<tr><td colspan='4'>Loading referrals…</td></tr>";
-  $("refTotal").textContent="0";
-  $("refPending").textContent="0";
-  $("refApproved").textContent="0";
-  $("refTasks").textContent="0";
-  $("refEarnings").textContent="0 TON";
-
-  $("copyRef").onclick=async()=>{
-    if(!$("refLink").value)return alert("Your referral code is not available yet.");
-    try{
-      await navigator.clipboard.writeText($("refLink").value);
-      alert("Referral link copied.");
-    }catch{
-      $("refLink").select();
-      alert("Please copy your referral link.");
-    }
-  };
-
-  const {data:people,error}=await db.from("profiles")
-    .select("id,full_name,created_at")
-    .eq("referred_by",currentUser.id)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    $("referralRows").innerHTML=`<tr><td colspan="4">Could not load referrals: ${esc(error.message)}</td></tr>`;
-    msg("refMessage","Referral list could not be loaded. Your profiles table must allow the signed-in user to read their referred members, or this needs a secure database RPC.","error");
-    return;
-  }
-
-  const invited=people||[];
-  $("refTotal").textContent=invited.length;
-  const ids=invited.map(x=>x.id);
-  let counts={};
-
-  if(ids.length){
-    const {data:subs,error:subError}=await db.from("task_submissions")
-      .select("user_id,status").in("user_id",ids).eq("status","approved");
-    if(subError){
-      $("referralRows").innerHTML=`<tr><td colspan="4">Could not load approved tasks: ${esc(subError.message)}</td></tr>`;
-      msg("refMessage","The database does not currently allow this referral task lookup: "+subError.message,"error");
-      return;
-    }
-    (subs||[]).forEach(x=>counts[x.user_id]=(counts[x.user_id]||0)+1);
-  }
-
-  let approved=0,totalTasks=0;
-  invited.forEach(x=>{
-    const n=counts[x.id]||0;
-    totalTasks+=n;
-    if(n>=2)approved++;
-  });
-
-  $("refApproved").textContent=approved;
-  $("refPending").textContent=invited.length-approved;
-  $("refTasks").textContent=totalTasks;
-
-  $("referralRows").innerHTML=invited.map(x=>{
-    const n=counts[x.id]||0;
-    const ok=n>=2;
-    return `
-      <tr>
-        <td>${esc(x.full_name||"Name unavailable")}</td>
-        <td>${x.created_at?new Date(x.created_at).toLocaleDateString():"—"}</td>
-        <td>${n}</td>
-        <td><span class="pill ${ok?"ok":"wait"}">${ok?"Approved":"Pending"}</span></td>
-      </tr>
-    `;
-  }).join("")||"<tr><td colspan='4'>You have not invited anyone yet.</td></tr>";
-
-  const {data:rewards,error:rewardError}=await db.from("reward_transactions")
-    .select("amount").eq("user_id",currentUser.id).eq("reward_type","referral");
-
-  if(rewardError){
-    msg("refMessage","Referral members loaded, but earnings could not be loaded: "+rewardError.message,"error");
-    return;
-  }
-  const earned=(rewards||[]).reduce((sum,x)=>sum+Number(x.amount||0),0);
-  $("refEarnings").textContent=money(earned);
-  msg("refMessage","Referral information loaded.","success");
-}
-
-function accountInputs(){
-  const m=$("withdrawMethod").value;
-  let fields=m==="PayPal"
-    ?'<label>PayPal email</label><input id="payEmail" type="email" required>'
-    :m==="TON Wallet"
-    ?'<label>TON public wallet address</label><input id="tonAddress" required>'
-    :'<label>Account number</label><input id="bankNumber" inputmode="numeric" required><label>Account holder name</label><input id="holderName" required>';
-  $("accountFields").innerHTML=fields;
-}
-
-$("withdrawMethod").onchange=accountInputs;
-accountInputs();
-
-$("withdrawForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const method=$("withdrawMethod").value;
-  let details=method==="PayPal"
-    ?{email:$("payEmail").value.trim()}
-    :method==="TON Wallet"
-    ?{wallet_address:$("tonAddress").value.trim()}
-    :{account_number:$("bankNumber").value.trim(),account_name:$("holderName").value.trim()};
-
-  const amount=Number($("withdrawAmount").value);
-  if(!Number.isFinite(amount)||amount<=0){
-    return msg("withdrawMessage","Enter a valid amount.","error");
-  }
-
-  const {error}=await db.from("withdrawal_requests").insert({
-    user_id:currentUser.id,method,amount,account_details:details,status:"pending"
-  });
-
-  if(error){
-    msg("withdrawMessage",error.message,"error");
-  }else{
-    msg("withdrawMessage","Withdrawal request submitted for manual review.","success");
-    e.target.reset();
-    accountInputs();
-    loadWithdrawals();
-  }
-});
-
-async function loadWithdrawals(){
-  const {data,error}=await db.from("withdrawal_requests")
-    .select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
-
-  $("withdrawRows").innerHTML=error
-    ?esc(error.message)
-    :(data||[]).map(x=>`
-      <p>${money(x.amount)} · ${esc(x.method)} · <span class="pill">${esc(x.status)}</span></p>
-    `).join("")||"No withdrawal requests yet.";
-}
-
-$("taskForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  if(!isAdmin)return msg("adminTaskMessage","Access denied.","error");
-
-  const {error}=await db.from("tasks").insert({
-    title:$("newTaskTitle").value.trim(),
-    description:$("newTaskDesc").value.trim(),
-    instructions:$("newTaskInstructions").value.trim(),
-    reward:Number($("newTaskReward").value),
-    duration_minutes:Number($("newTaskDuration").value),
-    category:$("newTaskCategory").value.trim(),
-    is_active:true
-  });
-
-  msg("adminTaskMessage",error?error.message:"Task created.",error?"error":"success");
-  if(!error){
-    e.target.reset();
-    loadTasks();
-  }
-});
-
 async function loadAdmin(){
   if(!isAdmin)return;
 
   const {data,error}=await db.from("task_submissions")
     .select("id,user_id,task_id,uid,proof_path,status,created_at")
-    .eq("status","pending").order("created_at",{ascending:true});
+    .eq("status","pending")
+    .order("created_at",{ascending:true});
 
   if(error){
     $("adminSubmissions").textContent=error.message;
@@ -1056,31 +13,75 @@ async function loadAdmin(){
 
   const taskIds=[...new Set((data||[]).map(x=>x.task_id))];
   let tasks={};
+
   if(taskIds.length){
-    const t=await db.from("tasks").select("id,title").in("id",taskIds);
+    const t=await db.from("tasks")
+      .select("id,title")
+      .in("id",taskIds);
+
     (t.data||[]).forEach(x=>tasks[x.id]=x.title);
   }
 
   const users=[...new Set((data||[]).map(x=>x.user_id))];
   let names={};
+
   if(users.length){
-    const p=await db.from("profiles").select("id,full_name").in("id",users);
+    const p=await db.from("profiles")
+      .select("id,full_name")
+      .in("id",users);
+
     (p.data||[]).forEach(x=>names[x.id]=x.full_name);
   }
 
   $("adminSubmissions").innerHTML=(data||[]).map(x=>`
     <div class="task">
       <b>${esc(tasks[x.task_id]||"Task")}</b>
-      <p>${esc(names[x.user_id]||x.user_id)} · UID: ${esc(x.uid)}</p>
-      <button class="outline proofBtn" data-path="${esc(x.proof_path)}">View screenshot</button>
-      <button class="primary approveBtn" data-id="${esc(x.id)}">Approve</button>
-      <button class="danger rejectBtn" data-id="${esc(x.id)}">Reject</button>
+
+      <p>
+        ${esc(names[x.user_id]||x.user_id)}
+        · UID: ${esc(x.uid)}
+      </p>
+
+      <button
+        class="outline proofBtn"
+        data-path="${esc(x.proof_path)}">
+        View screenshot
+      </button>
+
+      <button
+        class="primary approveBtn"
+        data-id="${esc(x.id)}">
+        Approve
+      </button>
+
+      <label style="margin-top:15px">
+        Your rejection comment
+      </label>
+
+      <textarea
+        class="adminRejectReason"
+        data-id="${esc(x.id)}"
+        placeholder="Type exactly why you are rejecting this task submission..."
+        rows="3"></textarea>
+
+      <button
+        class="danger rejectBtn"
+        data-id="${esc(x.id)}">
+        Reject Task & Send Comment
+      </button>
+
+      <p class="small">
+        The user will see your comment when you reject this submission.
+      </p>
     </div>
   `).join("")||"No pending submissions.";
 
   document.querySelectorAll(".proofBtn").forEach(b=>{
     b.onclick=async()=>{
-      const {data,error}=await db.storage.from("task-proofs").createSignedUrl(b.dataset.path,120);
+      const {data,error}=await db.storage
+        .from("task-proofs")
+        .createSignedUrl(b.dataset.path,120);
+
       if(error)alert(error.message);
       else window.open(data.signedUrl,"_blank");
     };
@@ -1089,33 +90,58 @@ async function loadAdmin(){
   document.querySelectorAll(".approveBtn").forEach(b=>{
     b.onclick=async()=>{
       if(!confirm("Approve this submission and credit its reward?"))return;
-      const {error}=await db.rpc("admin_approve_submission",{p_submission_id:b.dataset.id});
-      if(error)alert(error.message);
-      else{
+
+      const {error}=await db.rpc("admin_approve_submission",{
+        p_submission_id:b.dataset.id
+      });
+
+      if(error){
+        alert(error.message);
+      }else{
         alert("Submission approved.");
-        loadAdmin();
-        loadDashboard();
+        await loadAdmin();
+        await loadDashboard();
       }
     };
   });
 
   document.querySelectorAll(".rejectBtn").forEach(b=>{
     b.onclick=async()=>{
-      const reason=prompt("Enter a rejection reason:");
-      if(!reason?.trim())return;
+      const card=b.closest(".task");
+      const input=card.querySelector(".adminRejectReason");
+      const reason=input.value.trim();
+
+      if(!reason){
+        alert("Please type your rejection comment before rejecting this task.");
+        input.focus();
+        return;
+      }
+
+      if(!confirm("Reject this task and send your comment to the user?"))return;
+
+      b.disabled=true;
+      b.textContent="Sending comment...";
+
       const {error}=await db.rpc("admin_reject_submission",{
-        p_submission_id:b.dataset.id,p_reason:reason.trim()
+        p_submission_id:b.dataset.id,
+        p_reason:reason
       });
-      if(error)alert(error.message);
-      else{
-        alert("Submission rejected.");
-        loadAdmin();
+
+      if(error){
+        alert("Could not reject submission: "+error.message);
+        b.disabled=false;
+        b.textContent="Reject Task & Send Comment";
+      }else{
+        alert("Task rejected. Your comment has been saved.");
+        await loadAdmin();
       }
     };
   });
 
   const w=await db.from("withdrawal_requests")
-    .select("*").eq("status","pending").order("created_at",{ascending:true});
+    .select("*")
+    .eq("status","pending")
+    .order("created_at",{ascending:true});
 
   $("adminWithdrawals").innerHTML=w.error
     ?esc(w.error.message)
@@ -1123,26 +149,31 @@ async function loadAdmin(){
       <div class="task">
         <b>${money(x.amount)} · ${esc(x.method)}</b>
         <p class="small">${esc(JSON.stringify(x.account_details))}</p>
-        <button class="primary paidBtn" data-id="${esc(x.id)}">Mark paid</button>
-        <button class="danger failBtn" data-id="${esc(x.id)}">Reject</button>
+
+        <button class="primary paidBtn" data-id="${esc(x.id)}">
+          Mark paid
+        </button>
+
+        <button class="danger failBtn" data-id="${esc(x.id)}">
+          Reject
+        </button>
       </div>
     `).join("")||"No pending withdrawals.";
 
   document.querySelectorAll(".paidBtn,.failBtn").forEach(b=>{
     b.onclick=async()=>{
       const status=b.classList.contains("paidBtn")?"paid":"rejected";
+
       if(!confirm(`Mark request ${status}?`))return;
+
       const {error}=await db.rpc("admin_set_withdrawal_status",{
-        p_withdrawal_id:b.dataset.id,p_status:status,p_admin_notes:null
+        p_withdrawal_id:b.dataset.id,
+        p_status:status,
+        p_admin_notes:null
       });
+
       if(error)alert(error.message);
       else loadAdmin();
     };
   });
 }
-
-$("refreshTasks").onclick=loadTasks;
-boot();
-</script>
-</body>
-</html>
