@@ -5,76 +5,253 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AHNUM TASK | Work. Earn. Withdraw.</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-:root{--navy:#08172e;--navy2:#102746;--gold:#e8b84d;--bg:#f5f7fb;--ink:#15243a;--muted:#718096;--line:#e5eaf1;--green:#16865b;--red:#c44747}
+:root{
+--navy:#08172e;
+--navy2:#102746;
+--gold:#e8b84d;
+--bg:#f5f7fb;
+--ink:#15243a;
+--muted:#718096;
+--line:#e5eaf1;
+--green:#16865b;
+--red:#c44747
+}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
+
+body{
+margin:0;
+background:var(--bg);
+font-family:Arial,sans-serif;
+color:var(--ink)
+}
+
 button,input,select,textarea{font:inherit}
-button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:bold}
+
+button{
+cursor:pointer;
+border:0;
+border-radius:10px;
+padding:12px 16px;
+font-weight:bold
+}
+
 .primary{background:var(--gold);color:#171717}
 .dark{background:var(--navy);color:white}
 .outline{background:white;border:1px solid var(--line);color:var(--ink)}
 .danger{background:#fff0f0;color:var(--red)}
 .hidden{display:none!important}
-header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:white;padding:18px max(18px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+header{
+background:linear-gradient(120deg,var(--navy),var(--navy2));
+color:white;
+padding:18px max(18px,calc((100% - 1100px)/2));
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:14px;
+position:relative;
+flex-wrap:nowrap
+}
+
 .brand{font-weight:900;letter-spacing:1px;font-size:22px}
 .brand span,.gold{color:var(--gold)}
 .tag{font-size:11px;letter-spacing:2px;color:#d6deea;margin-top:4px}
-nav{display:flex;gap:7px;flex-wrap:wrap}
-nav button{background:transparent;color:#eaf0f8;padding:9px 11px}
-nav button.active{background:#ffffff18;color:var(--gold)}
-main{max-width:1100px;margin:24px auto;padding:0 16px}
-.hero{background:linear-gradient(120deg,#0a1a32,#183b61);border-radius:20px;color:white;padding:30px;margin-bottom:20px}
-.hero h1{font-size:clamp(27px,5vw,42px);margin:0 0 10px}
-.hero p{color:#d7e0eb;max-width:620px;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.card,.task{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #0c23400a}
+
+.menu-toggle{
+display:block;
+margin-left:auto;
+background:var(--gold);
+color:var(--navy);
+font-size:24px;
+padding:8px 14px;
+border-radius:9px
+}
+
+nav{
+display:none;
+position:absolute;
+top:75px;
+right:16px;
+z-index:1000;
+background:var(--navy2);
+border:1px solid #ffffff30;
+border-radius:12px;
+padding:10px;
+min-width:210px;
+box-shadow:0 8px 25px #0003;
+flex-direction:column;
+gap:4px
+}
+
+nav.open{display:flex}
+
+nav button{
+width:100%;
+text-align:left;
+background:transparent;
+color:#eaf0f8;
+padding:12px
+}
+
+nav button.active{
+background:#ffffff18;
+color:var(--gold)
+}
+
+main{
+max-width:1100px;
+margin:24px auto;
+padding:0 16px
+}
+
+.hero{
+background:linear-gradient(120deg,#0a1a32,#183b61);
+border-radius:20px;
+color:white;
+padding:30px;
+margin-bottom:20px
+}
+
+.hero h1{
+font-size:clamp(27px,5vw,42px);
+margin:0 0 10px
+}
+
+.hero p{
+color:#d7e0eb;
+max-width:620px;
+line-height:1.6
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:14px
+}
+
+.card,.task{
+background:white;
+border:1px solid var(--line);
+border-radius:16px;
+padding:18px;
+margin-bottom:14px;
+box-shadow:0 4px 18px #0c23400a
+}
+
 .card h2,.card h3{margin-top:0}
 .stat{font-size:27px;font-weight:900;color:var(--navy)}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-input,select,textarea{width:100%;padding:12px;border:1px solid #d9e1eb;border-radius:10px;background:white;margin:5px 0 12px;color:var(--ink)}
+
+.row{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+border:1px solid #d9e1eb;
+border-radius:10px;
+background:white;
+margin:5px 0 12px;
+color:var(--ink)
+}
+
 textarea{min-height:90px}
 label{font-size:13px;font-weight:bold;display:block}
-.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.pill{display:inline-block;border-radius:30px;padding:5px 9px;font-size:11px;font-weight:bold;background:#eef3f8;color:#40536b}
+
+.formgrid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+gap:10px
+}
+
+.pill{
+display:inline-block;
+border-radius:30px;
+padding:5px 9px;
+font-size:11px;
+font-weight:bold;
+background:#eef3f8;
+color:#40536b
+}
+
 .pill.ok{background:#e7f7ef;color:var(--green)}
 .pill.wait{background:#fff5df;color:#94650a}
 .pill.no{background:#fff0f0;color:var(--red)}
-.notice{padding:12px;border-radius:10px;background:#fff8e8;color:#77530d;margin:12px 0;font-size:13px;line-height:1.5}
+
+.notice{
+padding:12px;
+border-radius:10px;
+background:#fff8e8;
+color:#77530d;
+margin:12px 0;
+font-size:13px;
+line-height:1.5
+}
+
 .success{background:#eaf8f0;color:#14623f}
 .error{background:#fff0f0;color:#a42d2d}
 .small{font-size:12px;color:var(--muted)}
 .tablewrap{overflow:auto}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+
+table{
+border-collapse:collapse;
+width:100%;
+font-size:13px
+}
+
+th,td{
+text-align:left;
+padding:10px;
+border-bottom:1px solid var(--line);
+vertical-align:top
+}
+
 th{color:var(--muted)}
 .auth{max-width:480px;margin:25px auto}
 .foot{text-align:center;padding:24px;color:var(--muted);font-size:12px}
 .otp-input{text-align:center;font-size:28px;letter-spacing:12px;font-weight:bold;max-width:280px;margin:15px auto}
 .otp-box{text-align:center}
-@media(max-width:600px){header{padding:15px}nav{width:100%;overflow:auto}nav button{white-space:nowrap}.hero{padding:22px}}
+
+@media(max-width:600px){
+header{padding:15px}
+nav{top:68px;right:15px}
+.hero{padding:22px}
+}
 </style>
 </head>
+
 <body>
+
 <header>
 <div>
 <div class="brand">AHNUM <span>TASK</span></div>
 <div class="tag">WORK. EARN. WITHDRAW.</div>
 </div>
+
+<button id="menuToggle" class="menu-toggle hidden" type="button" aria-label="Open menu">☰</button>
+
 <nav id="nav" class="hidden">
-<button data-page="home" class="active">Home</button>
-<button data-page="tasks">Tasks</button>
+<button data-page="home" class="active">Dashboard</button>
+<button data-page="tasks">Available Tasks</button>
 <button data-page="wallet">Wallet</button>
-<button data-page="invite">Invite</button>
+<button data-page="invite">Invite Friends</button>
 <button data-page="withdraw">Withdraw</button>
 <button data-page="account">Account</button>
-<button data-page="admin" id="adminNav" class="hidden">Admin</button>
+<button data-page="admin" id="adminNav" class="hidden">Admin Dashboard</button>
 <button id="logoutBtn">Log out</button>
 </nav>
 </header>
 
 <main>
+
 <section id="authView" class="auth card">
 <h2>Welcome to AHNUM TASK</h2>
 <p class="small">Create an account or sign in to access available tasks and rewards.</p>
@@ -122,6 +299,7 @@ th{color:var(--muted)}
 </section>
 
 <section id="appView" class="hidden">
+
 <section class="hero">
 <div class="gold">WELCOME TO AHNUM TASK</div>
 <h1>Complete tasks.<br><span class="gold">Earn rewards.</span></h1>
@@ -130,21 +308,34 @@ th{color:var(--muted)}
 </section>
 
 <div class="grid">
-<div class="card"><div class="label">Available balance</div><div class="stat" id="balance">0 TON</div></div>
-<div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCount">0</div></div>
-<div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCount">0</div></div>
+<div class="card">
+<div class="label">Available balance</div>
+<div class="stat" id="balance">0 TON</div>
+</div>
+
+<div class="card">
+<div class="label">Approved tasks</div>
+<div class="stat" id="approvedCount">0</div>
+</div>
+
+<div class="card">
+<div class="label">Pending submissions</div>
+<div class="stat" id="pendingCount">0</div>
+</div>
 </div>
 
 <section id="page-home" class="page">
 <div class="card">
 <h2>Your dashboard</h2>
-<p class="small">Your balance updates after an administrator approves submitted task proof.</p>
 <div id="recentActivity" class="small">Your recent activity will appear here.</div>
 </div>
 </section>
 
 <section id="page-tasks" class="page hidden">
-<div class="row"><h2>Available tasks</h2><button class="outline" id="refreshTasks">Refresh</button></div>
+<div class="row">
+<h2>Available tasks</h2>
+<button class="outline" id="refreshTasks">Refresh</button>
+</div>
 <div id="tasksList" class="grid"></div>
 <div id="taskMessage"></div>
 </section>
@@ -152,17 +343,22 @@ th{color:var(--muted)}
 <section id="page-wallet" class="page hidden">
 <div class="card">
 <h2>Reward history</h2>
-<div class="tablewrap"><table>
+<div class="tablewrap">
+<table>
 <thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
 <tbody id="rewardsRows"></tbody>
-</table></div>
+</table>
 </div>
+</div>
+
 <div class="card">
 <h2>My submissions</h2>
-<div class="tablewrap"><table>
+<div class="tablewrap">
+<table>
 <thead><tr><th>Task</th><th>UID</th><th>Status</th><th>Admin note</th></tr></thead>
 <tbody id="submissionRows"></tbody>
-</table></div>
+</table>
+</div>
 </div>
 </section>
 
@@ -171,7 +367,10 @@ th{color:var(--muted)}
 <h2>Invite friends</h2>
 <p>Share your referral link. A referral reward is recorded when an eligible invited member completes at least two tasks approved by an administrator.</p>
 <div class="label">Your referral code</div>
-<div class="row"><strong id="refCode">—</strong><button class="outline" id="copyRef">Copy link</button></div>
+<div class="row">
+<strong id="refCode">—</strong>
+<button class="outline" id="copyRef">Copy link</button>
+</div>
 <input id="refLink" readonly>
 </div>
 </section>
@@ -180,9 +379,11 @@ th{color:var(--muted)}
 <div class="card">
 <h2>Request a withdrawal</h2>
 <div class="notice">Withdrawal requests are reviewed manually. Submitting a request does not send money automatically. Never enter a wallet recovery phrase or private key.</div>
+
 <form id="withdrawForm">
 <label>Amount (TON)</label>
 <input id="withdrawAmount" type="number" min="0.000001" step="0.000001" required>
+
 <label>Payment method</label>
 <select id="withdrawMethod">
 <option value="OPay">OPay</option>
@@ -190,38 +391,75 @@ th{color:var(--muted)}
 <option value="PayPal">PayPal</option>
 <option value="TON Wallet">TON Wallet</option>
 </select>
+
 <div id="accountFields"></div>
 <button class="primary">Submit withdrawal request</button>
 </form>
+
 <div id="withdrawMessage"></div>
 </div>
-<div class="card"><h3>My withdrawal requests</h3><div id="withdrawRows"></div></div>
+
+<div class="card">
+<h3>My withdrawal requests</h3>
+<div id="withdrawRows"></div>
+</div>
 </section>
 
 <section id="page-account" class="page hidden">
-<div class="card"><h2>Account</h2><div id="accountInfo"></div></div>
+<div class="card">
+<h2>Account</h2>
+<div id="accountInfo"></div>
+</div>
 </section>
 
 <section id="page-admin" class="page hidden">
 <div class="card">
 <h2>Admin — create a task</h2>
+
 <form id="taskForm">
-<label>Task title</label><input id="newTaskTitle" required>
-<label>Description</label><textarea id="newTaskDesc" required></textarea>
-<label>Instructions</label><textarea id="newTaskInstructions"></textarea>
+<label>Task title</label>
+<input id="newTaskTitle" required>
+
+<label>Description</label>
+<textarea id="newTaskDesc" required></textarea>
+
+<label>Instructions</label>
+<textarea id="newTaskInstructions"></textarea>
+
 <div class="formgrid">
-<div><label>Reward (TON)</label><input id="newTaskReward" type="number" min="0" step="0.000001" required></div>
-<div><label>Duration (minutes)</label><input id="newTaskDuration" type="number" min="1" value="30"></div>
-<div><label>Category</label><input id="newTaskCategory" value="General"></div>
+<div>
+<label>Reward (TON)</label>
+<input id="newTaskReward" type="number" min="0" step="0.000001" required>
 </div>
+<div>
+<label>Duration (minutes)</label>
+<input id="newTaskDuration" type="number" min="1" value="30">
+</div>
+<div>
+<label>Category</label>
+<input id="newTaskCategory" value="General">
+</div>
+</div>
+
 <button class="primary">Create task</button>
 </form>
+
 <div id="adminTaskMessage"></div>
 </div>
-<div class="card"><h2>Review submissions</h2><div id="adminSubmissions" class="tablewrap"></div></div>
-<div class="card"><h2>Withdrawal requests</h2><div id="adminWithdrawals" class="tablewrap"></div></div>
+
+<div class="card">
+<h2>Review submissions</h2>
+<div id="adminSubmissions" class="tablewrap"></div>
+</div>
+
+<div class="card">
+<h2>Withdrawal requests</h2>
+<div id="adminWithdrawals" class="tablewrap"></div>
+</div>
 </section>
+
 </section>
+
 <div id="globalMessage" aria-live="polite"></div>
 </main>
 
@@ -234,6 +472,7 @@ AHNUM TASK · WORK. EARN. WITHDRAW. ·
 <script>
 const SUPABASE_URL="https://qvtyinfpsckvbojouapk.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_3RaREsT5T9li9zPVVi3kYQ_wCUc7Ji1";
+
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 let currentUser=null,profile=null,isAdmin=false;
@@ -242,18 +481,34 @@ let pendingName="";
 let pendingPassword="";
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function money(n){return Number(n||0).toFixed(6).replace(/0+$/,"").replace(/\.$/,"")+" TON";}
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[c]));
+
+function money(n){
+return Number(n||0).toFixed(6).replace(/0+$/,"").replace(/\.$/,"")+" TON";
+}
 
 function msg(id,text,type=""){
 const el=$(id);
-if(el){el.className="notice "+type;el.textContent=text;}
+if(el){
+el.className="notice "+type;
+el.textContent=text;
+}
 }
 
 function showAuth(mode="signup"){
 $("authView").classList.remove("hidden");
 $("appView").classList.add("hidden");
 $("nav").classList.add("hidden");
+$("menuToggle").classList.add("hidden");
+$("nav").classList.remove("open");
+
 $("authChoices").classList.remove("hidden");
 $("signupForm").classList.toggle("hidden",mode!=="signup");
 $("loginForm").classList.toggle("hidden",mode!=="login");
@@ -274,12 +529,29 @@ function showApp(){
 $("authView").classList.add("hidden");
 $("appView").classList.remove("hidden");
 $("nav").classList.remove("hidden");
+$("menuToggle").classList.remove("hidden");
+$("nav").classList.remove("open");
 }
 
+$("menuToggle").onclick=()=>{
+$("nav").classList.toggle("open");
+};
+
 function page(name){
+if(name==="admin"&&!isAdmin){
+alert("Access denied.");
+return;
+}
+
 document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
 $("page-"+name)?.classList.remove("hidden");
-document.querySelectorAll("nav [data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===name));
+
+document.querySelectorAll("nav [data-page]").forEach(x=>{
+x.classList.toggle("active",x.dataset.page===name);
+});
+
+$("nav").classList.remove("open");
+
 if(name==="tasks")loadTasks();
 if(name==="wallet")loadWallet();
 if(name==="invite")loadReferral();
@@ -287,8 +559,13 @@ if(name==="withdraw")loadWithdrawals();
 if(name==="admin"&&isAdmin)loadAdmin();
 }
 
-document.querySelectorAll("nav [data-page]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.page)));
-document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>page(b.dataset.goto)));
+document.querySelectorAll("nav [data-page]").forEach(b=>{
+b.addEventListener("click",()=>page(b.dataset.page));
+});
+
+document.querySelectorAll("[data-goto]").forEach(b=>{
+b.addEventListener("click",()=>page(b.dataset.goto));
+});
 
 $("showLogin").onclick=()=>showAuth("login");
 $("showSignup").onclick=()=>showAuth("signup");
@@ -399,6 +676,7 @@ msg("authMessage","You can return to registration.","");
 
 $("loginForm").addEventListener("submit",async e=>{
 e.preventDefault();
+
 msg("authMessage","Signing in…");
 
 const {error}=await db.auth.signInWithPassword({
@@ -411,11 +689,15 @@ if(error)msg("authMessage",error.message,"error");
 
 $("logoutBtn").onclick=async()=>{
 await db.auth.signOut();
-currentUser=null;profile=null;showAuth("login");
+currentUser=null;
+profile=null;
+isAdmin=false;
+showAuth("login");
 };
 
 async function boot(){
 const {data:{session}}=await db.auth.getSession();
+
 if(session)await enter(session.user);
 else showAuth();
 
@@ -434,16 +716,31 @@ page("home");
 }
 
 async function loadProfile(){
-const {data,error}=await db.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
-if(error){msg("globalMessage","Could not load profile: "+error.message,"error");return;}
+const {data,error}=await db.from("profiles")
+.select("*")
+.eq("id",currentUser.id)
+.maybeSingle();
+
+if(error){
+msg("globalMessage","Could not load profile: "+error.message,"error");
+return;
+}
+
 profile=data;
 
-const role=await db.from("user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
+const role=await db.from("user_roles")
+.select("role")
+.eq("user_id",currentUser.id)
+.maybeSingle();
+
 isAdmin=role.data?.role==="admin";
 
 $("adminNav").classList.toggle("hidden",!isAdmin);
 
-$("accountInfo").innerHTML=`<p><b>Name:</b> ${esc(profile?.full_name||currentUser.user_metadata?.full_name||"Member")}</p><p><b>Email:</b> ${esc(currentUser.email)}</p><p><b>Referral code:</b> ${esc(profile?.referral_code||"Not assigned")}</p>`;
+$("accountInfo").innerHTML=`
+<p><b>Name:</b> ${esc(profile?.full_name||currentUser.user_metadata?.full_name||"Member")}</p>
+<p><b>Email:</b> ${esc(currentUser.email)}</p>
+<p><b>Referral code:</b> ${esc(profile?.referral_code||"Not assigned")}</p>`;
 }
 
 async function loadDashboard(){
@@ -458,19 +755,34 @@ return;
 }
 
 const total=(rw.data||[]).reduce((s,r)=>s+Number(r.amount||0),0);
+
 $("balance").textContent=money(total);
-$("approvedCount").textContent=(sub.data||[]).filter(x=>x.status==="approved").length;
-$("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").length;
+
+$("approvedCount").textContent=
+(sub.data||[]).filter(x=>x.status==="approved").length;
+
+$("pendingCount").textContent=
+(sub.data||[]).filter(x=>x.status==="pending").length;
 }
 
 async function loadTasks(){
 const box=$("tasksList");
 box.innerHTML="Loading tasks…";
 
-const {data,error}=await db.from("tasks").select("*").eq("is_active",true).order("created_at",{ascending:false});
+const {data,error}=await db.from("tasks")
+.select("*")
+.eq("is_active",true)
+.order("created_at",{ascending:false});
 
-if(error){box.innerHTML=`<p class="notice error">Could not load tasks: ${esc(error.message)}</p>`;return;}
-if(!data?.length){box.innerHTML="<p class='small'>There are no active tasks right now.</p>";return;}
+if(error){
+box.innerHTML=`<p class="notice error">Could not load tasks: ${esc(error.message)}</p>`;
+return;
+}
+
+if(!data?.length){
+box.innerHTML="<p class='small'>There are no active tasks right now.</p>";
+return;
+}
 
 box.innerHTML=data.map(t=>`
 <article class="task">
@@ -478,15 +790,22 @@ box.innerHTML=data.map(t=>`
 <h3>${esc(t.title)}</h3>
 <p>${esc(t.description)}</p>
 <p class="small">${esc(t.instructions||"Follow the task instructions and submit proof.")}</p>
-<div class="row"><b>${money(t.reward)}</b><span class="small">${Number(t.duration_minutes||0)} min</span></div>
+<div class="row">
+<b>${money(t.reward)}</b>
+<span class="small">${Number(t.duration_minutes||0)} min</span>
+</div>
 <button class="primary submitTask" data-id="${esc(t.id)}">Submit proof</button>
-</article>`).join("");
+</article>
+`).join("");
 
-box.querySelectorAll(".submitTask").forEach(b=>b.onclick=()=>submissionDialog(b.dataset.id));
+box.querySelectorAll(".submitTask").forEach(b=>{
+b.onclick=()=>submissionDialog(b.dataset.id);
+});
 }
 
 async function submissionDialog(taskId){
 const uid=prompt("Enter the UID required for this task:");
+
 if(uid===null)return;
 if(!uid.trim())return alert("UID is required.");
 
@@ -496,18 +815,26 @@ fileInput.accept="image/*";
 
 fileInput.onchange=async()=>{
 const file=fileInput.files[0];
+
 if(!file)return;
 
-if(file.size>5*1024*1024)return msg("taskMessage","Screenshot must be 5 MB or smaller.","error");
+if(file.size>5*1024*1024){
+return msg("taskMessage","Screenshot must be 5 MB or smaller.","error");
+}
 
 msg("taskMessage","Uploading screenshot and submitting…");
 
 const ext=(file.name.split(".").pop()||"png").replace(/[^a-zA-Z0-9]/g,"");
 const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
 
-const up=await db.storage.from("task-proofs").upload(path,file,{contentType:file.type||"image/png",upsert:false});
+const up=await db.storage.from("task-proofs").upload(
+path,file,
+{contentType:file.type||"image/png",upsert:false}
+);
 
-if(up.error)return msg("taskMessage","Screenshot upload failed: "+up.error.message,"error");
+if(up.error){
+return msg("taskMessage","Screenshot upload failed: "+up.error.message,"error");
+}
 
 const ins=await db.from("task_submissions").insert({
 id:crypto.randomUUID(),
@@ -532,24 +859,54 @@ fileInput.click();
 
 async function loadWallet(){
 const [r,s]=await Promise.all([
-db.from("reward_transactions").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
-db.from("task_submissions").select("*,tasks(title)").eq("user_id",currentUser.id).order("created_at",{ascending:false})
+db.from("reward_transactions")
+.select("*")
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:false}),
+
+db.from("task_submissions")
+.select("*,tasks(title)")
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:false})
 ]);
 
-$("rewardsRows").innerHTML=(r.data||[]).map(x=>`<tr><td>${new Date(x.created_at).toLocaleDateString()}</td><td>${esc(x.reward_type)}</td><td>${money(x.amount)}</td></tr>`).join("")||"<tr><td colspan='3'>No rewards yet.</td></tr>";
+$("rewardsRows").innerHTML=(r.data||[]).map(x=>`
+<tr>
+<td>${new Date(x.created_at).toLocaleDateString()}</td>
+<td>${esc(x.reward_type)}</td>
+<td>${money(x.amount)}</td>
+</tr>
+`).join("")||"<tr><td colspan='3'>No rewards yet.</td></tr>";
 
-$("submissionRows").innerHTML=(s.data||[]).map(x=>`<tr><td>${esc(x.tasks?.title||"Task")}</td><td>${esc(x.uid)}</td><td><span class="pill ${x.status==="approved"?"ok":x.status==="rejected"?"no":"wait"}">${esc(x.status)}</span></td><td>${esc(x.rejection_reason||"—")}</td></tr>`).join("")||"<tr><td colspan='4'>No submissions yet.</td></tr>";
+$("submissionRows").innerHTML=(s.data||[]).map(x=>`
+<tr>
+<td>${esc(x.tasks?.title||"Task")}</td>
+<td>${esc(x.uid)}</td>
+<td><span class="pill ${x.status==="approved"?"ok":x.status==="rejected"?"no":"wait"}">${esc(x.status)}</span></td>
+<td>${esc(x.rejection_reason||"—")}</td>
+</tr>
+`).join("")||"<tr><td colspan='4'>No submissions yet.</td></tr>";
 }
 
 async function loadReferral(){
 const code=profile?.referral_code||"";
+
 $("refCode").textContent=code||"Not assigned";
-$("refLink").value=code?`${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`:"";
+
+$("refLink").value=code
+?`${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`
+:"";
 
 $("copyRef").onclick=async()=>{
 if(!$("refLink").value)return;
+
+try{
 await navigator.clipboard.writeText($("refLink").value);
 alert("Referral link copied.");
+}catch{
+$("refLink").select();
+alert("Please copy your referral link.");
+}
 };
 }
 
@@ -581,7 +938,9 @@ let details=method==="PayPal"
 
 const amount=Number($("withdrawAmount").value);
 
-if(!Number.isFinite(amount)||amount<=0)return msg("withdrawMessage","Enter a valid amount.","error");
+if(!Number.isFinite(amount)||amount<=0){
+return msg("withdrawMessage","Enter a valid amount.","error");
+}
 
 const {error}=await db.from("withdrawal_requests").insert({
 user_id:currentUser.id,
@@ -591,8 +950,9 @@ account_details:details,
 status:"pending"
 });
 
-if(error)msg("withdrawMessage",error.message,"error");
-else{
+if(error){
+msg("withdrawMessage",error.message,"error");
+}else{
 msg("withdrawMessage","Withdrawal request submitted for manual review.","success");
 e.target.reset();
 accountInputs();
@@ -601,13 +961,24 @@ loadWithdrawals();
 });
 
 async function loadWithdrawals(){
-const {data,error}=await db.from("withdrawal_requests").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
+const {data,error}=await db.from("withdrawal_requests")
+.select("*")
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:false});
 
-$("withdrawRows").innerHTML=error?esc(error.message):(data||[]).map(x=>`<p>${money(x.amount)} · ${esc(x.method)} · <span class="pill">${esc(x.status)}</span></p>`).join("")||"No withdrawal requests yet.";
+$("withdrawRows").innerHTML=error
+?esc(error.message)
+:(data||[]).map(x=>`
+<p>${money(x.amount)} · ${esc(x.method)} · <span class="pill">${esc(x.status)}</span></p>
+`).join("")||"No withdrawal requests yet.";
 }
 
 $("taskForm").addEventListener("submit",async e=>{
 e.preventDefault();
+
+if(!isAdmin){
+return msg("adminTaskMessage","Access denied.","error");
+}
 
 const {error}=await db.from("tasks").insert({
 title:$("newTaskTitle").value.trim(),
@@ -621,7 +992,10 @@ is_active:true
 
 msg("adminTaskMessage",error?error.message:"Task created.",error?"error":"success");
 
-if(!error){e.target.reset();loadTasks();}
+if(!error){
+e.target.reset();
+loadTasks();
+}
 });
 
 async function loadAdmin(){
@@ -629,9 +1003,13 @@ if(!isAdmin)return;
 
 const {data,error}=await db.from("task_submissions")
 .select("id,user_id,task_id,uid,proof_path,status,created_at")
-.eq("status","pending").order("created_at",{ascending:true});
+.eq("status","pending")
+.order("created_at",{ascending:true});
 
-if(error){$("adminSubmissions").textContent=error.message;return;}
+if(error){
+$("adminSubmissions").textContent=error.message;
+return;
+}
 
 const taskIds=[...new Set((data||[]).map(x=>x.task_id))];
 let tasks={};
@@ -656,44 +1034,73 @@ $("adminSubmissions").innerHTML=(data||[]).map(x=>`
 <button class="outline proofBtn" data-path="${esc(x.proof_path)}">View screenshot</button>
 <button class="primary approveBtn" data-id="${esc(x.id)}">Approve</button>
 <button class="danger rejectBtn" data-id="${esc(x.id)}">Reject</button>
-</div>`).join("")||"No pending submissions.";
+</div>
+`).join("")||"No pending submissions.";
 
-document.querySelectorAll(".proofBtn").forEach(b=>b.onclick=async()=>{
-const {data,error}=await db.storage.from("task-proofs").createSignedUrl(b.dataset.path,120);
+document.querySelectorAll(".proofBtn").forEach(b=>{
+b.onclick=async()=>{
+const {data,error}=await db.storage.from("task-proofs")
+.createSignedUrl(b.dataset.path,120);
+
 if(error)alert(error.message);
 else window.open(data.signedUrl,"_blank");
+};
 });
 
-document.querySelectorAll(".approveBtn").forEach(b=>b.onclick=async()=>{
+document.querySelectorAll(".approveBtn").forEach(b=>{
+b.onclick=async()=>{
 if(!confirm("Approve this submission and credit its reward?"))return;
 
-const {error}=await db.rpc("admin_approve_submission",{p_submission_id:b.dataset.id});
-
-if(error)alert(error.message);
-else{alert("Submission approved.");loadAdmin();loadDashboard();}
+const {error}=await db.rpc("admin_approve_submission",{
+p_submission_id:b.dataset.id
 });
 
-document.querySelectorAll(".rejectBtn").forEach(b=>b.onclick=async()=>{
+if(error)alert(error.message);
+else{
+alert("Submission approved.");
+loadAdmin();
+loadDashboard();
+}
+};
+});
+
+document.querySelectorAll(".rejectBtn").forEach(b=>{
+b.onclick=async()=>{
 const reason=prompt("Enter a rejection reason:");
+
 if(!reason?.trim())return;
 
-const {error}=await db.rpc("admin_reject_submission",{p_submission_id:b.dataset.id,p_reason:reason.trim()});
-
-if(error)alert(error.message);
-else{alert("Submission rejected.");loadAdmin();}
+const {error}=await db.rpc("admin_reject_submission",{
+p_submission_id:b.dataset.id,
+p_reason:reason.trim()
 });
 
-const w=await db.from("withdrawal_requests").select("*").eq("status","pending").order("created_at",{ascending:true});
+if(error)alert(error.message);
+else{
+alert("Submission rejected.");
+loadAdmin();
+}
+};
+});
 
-$("adminWithdrawals").innerHTML=w.error?esc(w.error.message):(w.data||[]).map(x=>`
+const w=await db.from("withdrawal_requests")
+.select("*")
+.eq("status","pending")
+.order("created_at",{ascending:true});
+
+$("adminWithdrawals").innerHTML=w.error
+?esc(w.error.message)
+:(w.data||[]).map(x=>`
 <div class="task">
 <b>${money(x.amount)} · ${esc(x.method)}</b>
 <p class="small">${esc(JSON.stringify(x.account_details))}</p>
 <button class="primary paidBtn" data-id="${esc(x.id)}">Mark paid</button>
 <button class="danger failBtn" data-id="${esc(x.id)}">Reject</button>
-</div>`).join("")||"No pending withdrawals.";
+</div>
+`).join("")||"No pending withdrawals.";
 
-document.querySelectorAll(".paidBtn,.failBtn").forEach(b=>b.onclick=async()=>{
+document.querySelectorAll(".paidBtn,.failBtn").forEach(b=>{
+b.onclick=async()=>{
 const status=b.classList.contains("paidBtn")?"paid":"rejected";
 
 if(!confirm(`Mark request ${status}?`))return;
@@ -706,10 +1113,12 @@ p_admin_notes:null
 
 if(error)alert(error.message);
 else loadAdmin();
+};
 });
 }
 
 $("refreshTasks").onclick=loadTasks;
+
 boot();
 </script>
 </body>
