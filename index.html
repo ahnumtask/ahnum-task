@@ -1,1084 +1,204 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AHNUM TASK | Work. Earn. Withdraw.</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+/* ========== REFERRAL CODE: 8 CHARACTERS ========== */
 
-<style>
-:root{
-  --navy:#08172e;--navy2:#102746;--gold:#e8b84d;
-  --bg:#f3f6fb;--white:#fff;--green:#16a34a;
-  --red:#dc2626;--blue:#2563eb;--muted:#64748b;
-  --border:#e2e8f0;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#172033}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-
-header{background:var(--navy);color:white;padding:15px;position:sticky;top:0;z-index:20}
-.header-inner{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font-weight:900;font-size:21px;color:var(--gold)}
-.brand small{display:block;color:white;font-size:10px;font-weight:400;margin-top:4px}
-
-/* MENU IS HIDDEN UNTIL LOGIN */
-#menuButton,#navigation{display:none}
-body.logged-in #menuButton{display:block}
-body.logged-in #navigation{display:none}
-body.logged-in #navigation.open{display:flex}
-
-.menu-btn{background:var(--gold);color:var(--navy);border:0;border-radius:8px;padding:10px 14px;font-weight:bold}
-nav{background:var(--navy2);padding:10px;flex-wrap:wrap;gap:8px}
-nav button{background:#1b3558;color:white;border:1px solid #304d72;padding:10px 12px;border-radius:8px}
-nav button.active{background:var(--gold);color:var(--navy)}
-
-main{max-width:1100px;padding:15px;margin:auto}
-section.page{display:none}
-section.page.active{display:block}
-.card{background:white;border-radius:14px;padding:18px;margin-bottom:15px;box-shadow:0 3px 12px rgba(0,0,0,.045)}
-h2,h3{margin-top:0}
-.small{font-size:13px;color:var(--muted)}
-.btn{border:0;padding:11px 15px;border-radius:9px;font-weight:bold}
-.primary{background:var(--navy);color:white}
-.gold{background:var(--gold);color:var(--navy)}
-.green{background:var(--green);color:white}
-.red{background:var(--red);color:white}
-.blue{background:var(--blue);color:white}
-.gray{background:#e2e8f0;color:#172033}
-input,select,textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:9px;margin:7px 0;background:white}
-textarea{min-height:90px;resize:vertical}
-label{font-size:13px;font-weight:bold}
-.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.stat{background:var(--navy2);color:white;border-radius:12px;padding:16px}
-.stat strong{display:block;color:var(--gold);font-size:23px;margin-top:8px}
-.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:bold}
-.badge.pending{background:#fff3cd;color:#8a6500}
-.badge.approved{background:#dcfce7;color:#166534}
-.badge.rejected{background:#fee2e2;color:#991b1b}
-.badge.leader{background:#fef3c7;color:#92400e}
-.badge.normal{background:#e0e7ff;color:#3730a3}
-.banner{overflow:hidden;border-radius:15px;background:linear-gradient(130deg,var(--navy),var(--navy2));color:white;margin-bottom:15px}
-.banner img{width:100%;max-height:260px;object-fit:cover;display:none}
-.banner-text{padding:25px}
-.banner h2{color:var(--gold);margin-bottom:8px}
-.task-card{border:1px solid var(--border);border-radius:12px;padding:15px;background:white}
-.task-card h3{margin-bottom:8px}
-.task-card .reward{color:#14803c;font-weight:bold;margin:10px 0}
-.task-card a{word-break:break-all}
-.proof-preview{max-width:100%;max-height:220px;display:block;margin:10px 0;border-radius:8px}
-.task-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.task-actions button{width:100%}
-.history-item{border-left:4px solid var(--navy);padding:12px;background:#f8fafc;border-radius:8px;margin:10px 0}
-.history-item.approved{border-color:var(--green)}
-.history-item.rejected{border-color:var(--red)}
-.history-item.pending{border-color:#eab308}
-hr{border:0;border-top:1px solid var(--border);margin:15px 0}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
-.auth-box{max-width:480px;margin:35px auto}
-.notice{padding:12px;background:#eff6ff;border-radius:9px;color:#1e40af;font-size:13px;margin:10px 0}
-footer{text-align:center;padding:25px 15px;color:var(--muted)}
-footer a{margin:0 8px}
-
-@media(max-width:600px){
- .row{grid-template-columns:1fr}
- main{padding:10px}
- .card{padding:14px}
- .header-inner{gap:6px}
- .brand{font-size:18px}
- th,td{padding:8px;font-size:12px}
-}
-</style>
-</head>
-
-<body>
-
-<header>
- <div class="header-inner">
-  <div class="brand">AHNUM TASK<small>WORK. EARN. WITHDRAW.</small></div>
-  <button id="menuButton" class="menu-btn" onclick="toggleMenu()">☰ MENU</button>
- </div>
- <nav id="navigation">
-  <button data-page="dashboard" onclick="page('dashboard')">Dashboard</button>
-  <button data-page="tasks" onclick="page('tasks')">Available Tasks</button>
-  <button data-page="history" onclick="page('history')">Task History</button>
-  <button data-page="wallet" onclick="page('wallet')">Wallet</button>
-  <button data-page="invite" onclick="page('invite')">Invite Friends</button>
-  <button data-page="withdraw" onclick="page('withdraw')">Withdraw</button>
-  <button data-page="account" onclick="page('account')">Account</button>
-  <button data-page="admin" onclick="page('admin')">Admin Dashboard</button>
-  <button onclick="logout()">Logout</button>
- </nav>
-</header>
-
-<main>
-
-<!-- AUTHENTICATION -->
-<section id="authPage">
-
- <div class="card auth-box" id="loginBox">
-  <h2>Welcome Back</h2>
-  <p class="small">Login to your AHNUM TASK account.</p>
-  <input id="loginEmail" type="email" placeholder="Email address">
-  <input id="loginPassword" type="password" placeholder="Password">
-  <button class="btn primary" style="width:100%" onclick="login()">Login</button>
-  <p style="text-align:right">
-   <button class="btn gray" onclick="showForgotPassword()">Forgot Password?</button>
-  </p>
-  <hr>
-  <button class="btn gold" style="width:100%" onclick="showSignup()">Create Account</button>
- </div>
-
- <div class="card auth-box hidden" id="signupBox">
-  <h2>Create Account</h2>
-  <input id="signupName" placeholder="Full name">
-  <input id="signupEmail" type="email" placeholder="Email address">
-  <input id="signupPassword" type="password" placeholder="Password (minimum 6 characters)">
-  <input id="signupReferral" placeholder="Referral code (optional)">
-
-  <label>Account Type</label>
-  <select id="signupAccountType">
-   <option value="normal_user">Normal User</option>
-   <option value="community_leader">Community Leader</option>
-  </select>
-
-  <div class="notice">
-   Community Leader task bonuses are earned after 10 approved completions of the same task.
-  </div>
-
-  <button class="btn primary" style="width:100%" onclick="signup()">Register</button>
-  <button class="btn gray" style="width:100%;margin-top:8px" onclick="showLogin()">Back to Login</button>
- </div>
-
- <div class="card auth-box hidden" id="otpBox">
-  <h2>Email Verification</h2>
-  <p>Enter the 6-digit verification code sent to your email.</p>
-  <input id="otpEmail" type="email" placeholder="Email">
-  <input id="otpCode" inputmode="numeric" maxlength="6" placeholder="6-digit code">
-  <button class="btn primary" style="width:100%" onclick="verifyOTP()">Verify Email</button>
-  <button class="btn gray" style="width:100%;margin-top:8px" onclick="resendOTP()">Resend Code</button>
- </div>
-
- <div class="card auth-box hidden" id="forgotBox">
-  <h2>Reset Password</h2>
-  <p>Enter your email address to receive a password reset link.</p>
-  <input id="forgotEmail" type="email" placeholder="Your registered email">
-  <button class="btn primary" style="width:100%" onclick="sendResetEmail()">Send Reset Link</button>
-  <button class="btn gray" style="width:100%;margin-top:8px" onclick="showLogin()">Back to Login</button>
- </div>
-
- <div class="card auth-box hidden" id="resetPasswordBox">
-  <h2>Choose a New Password</h2>
-  <input id="newPassword" type="password" placeholder="New password">
-  <input id="confirmNewPassword" type="password" placeholder="Confirm new password">
-  <button class="btn primary" style="width:100%" onclick="saveNewPassword()">Update Password</button>
- </div>
-</section>
-
-<!-- DASHBOARD -->
-<section class="page" id="page-dashboard">
- <div class="banner">
-  <img id="mainBannerImage" alt="AHNUM TASK Banner">
-  <div class="banner-text">
-   <h2>Welcome to AHNUM TASK</h2>
-   <p>Complete tasks, submit proof, earn rewards and withdraw your earnings.</p>
-  </div>
- </div>
-
- <div class="card">
-  <h2>Welcome, <span id="dashName">User</span></h2>
-  <div id="accountTypeBadge"></div>
-  <p class="small">Your account overview.</p>
- </div>
-
- <div class="grid">
-  <div class="stat">Wallet Balance<strong id="dashBalance">₦0.00</strong></div>
-  <div class="stat">Approved Earnings<strong id="dashEarned">₦0.00</strong></div>
-  <div class="stat">Pending Submissions<strong id="dashPending">0</strong></div>
-  <div class="stat">Approved Tasks<strong id="dashApprovedCount">0</strong></div>
- </div>
-
- <div class="card">
-  <h3>Recent Task Status</h3>
-  <div id="dashboardTaskStatus">Loading...</div>
-  <button class="btn primary" onclick="page('history')">View Task History</button>
- </div>
-
- <div class="card">
-  <h3>Quick Access</h3>
-  <div class="grid">
-   <button class="btn primary" onclick="page('tasks')">Start Tasks</button>
-   <button class="btn gold" onclick="page('wallet')">My Wallet</button>
-   <button class="btn blue" onclick="page('invite')">Invite Friends</button>
-   <button class="btn green" onclick="page('withdraw')">Withdraw Funds</button>
-  </div>
- </div>
-</section>
-
-<!-- AVAILABLE TASKS -->
-<section class="page" id="page-tasks">
- <div class="card">
-  <h2>Available Tasks</h2>
-  <p>Open a task, visit its link, wait for the timer, and submit proof.</p>
-  <div id="tasksContainer">Loading tasks...</div>
- </div>
-</section>
-
-<!-- TASK HISTORY -->
-<section class="page" id="page-history">
- <div class="card">
-  <h2>Task History</h2>
-  <p class="small">All submissions, pending, approved and rejected.</p>
-  <div id="historyContainer">Loading history...</div>
- </div>
-</section>
-
-<!-- WALLET -->
-<section class="page" id="page-wallet">
- <div class="card">
-  <h2>My Wallet</h2>
-  <div class="grid">
-   <div class="stat">Available Balance<strong id="walletBalance">₦0.00</strong></div>
-   <div class="stat">Total Approved Earnings<strong id="walletTotal">₦0.00</strong></div>
-  </div>
-  <h3 style="margin-top:20px">Transaction History</h3>
-  <div id="transactionHistory">Loading...</div>
- </div>
-</section>
-
-<!-- INVITE FRIENDS -->
-<section class="page" id="page-invite">
- <div class="card">
-  <h2>Invite Friends</h2>
-  <p>Share your referral code with friends.</p>
-
-  <div class="stat">
-   Your Referral Code
-   <strong id="referralCode">Loading...</strong>
-  </div>
-
-  <button class="btn gold" onclick="copyReferral()">Copy Referral Code</button>
-
-  <div class="grid" style="margin-top:15px">
-   <div class="stat">Total Referrals<strong id="referralCount">0</strong></div>
-   <div class="stat">Successful Referrals<strong id="qualifiedReferralCount">0</strong></div>
-  </div>
-
-  <div id="referralList"></div>
- </div>
-</section>
-
-<!-- WITHDRAW -->
-<section class="page" id="page-withdraw">
- <div class="card">
-  <h2>Withdraw</h2>
-  <p class="small">Withdraw your available balance to your bank account.</p>
-  <div class="stat">Available Balance<strong id="withdrawBalance">₦0.00</strong></div>
-  <input id="withdrawBank" placeholder="Bank Name">
-  <input id="withdrawAccountName" placeholder="Account Name">
-  <input id="withdrawAccountNumber" inputmode="numeric" placeholder="Account Number">
-  <input id="withdrawAmount" type="number" min="1" placeholder="Amount (₦)">
-  <button class="btn primary" style="width:100%" onclick="submitWithdrawal()">Submit Withdrawal</button>
-  <h3>Withdrawal Requests</h3>
-  <div id="withdrawalHistory">Loading...</div>
- </div>
-</section>
-
-<!-- ACCOUNT -->
-<section class="page" id="page-account">
- <div class="card">
-  <h2>My Account</h2>
-  <p>Email: <strong id="accountEmail"></strong></p>
-  <p>User ID: <small id="accountUID"></small></p>
-  <p>Account Type: <strong id="accountTypeText"></strong></p>
-  <div id="accountBadge"></div>
- </div>
-</section>
-
-<!-- ADMIN -->
-<section class="page" id="page-admin">
- <div class="card">
-  <h2>Admin Dashboard</h2>
-  <div class="grid">
-   <div class="stat">Pending Proofs<strong id="adminPendingCount">0</strong></div>
-   <div class="stat">Complaints<strong id="adminComplaintCount">0</strong></div>
-   <div class="stat">Withdrawals<strong id="adminWithdrawalCount">0</strong></div>
-  </div>
- </div>
-
- <div class="card">
-  <h3>Website Main Banner</h3>
-  <p class="small">Upload or change the main website banner.</p>
-  <input type="file" id="bannerFile" accept="image/*">
-  <button class="btn gold" onclick="uploadBanner()">Upload / Change Banner</button>
-  <div id="bannerAdminMessage"></div>
- </div>
-
- <div class="card">
-  <h3>Create New Task</h3>
-  <input id="newTaskTitle" placeholder="Task title">
-  <textarea id="newTaskDescription" placeholder="Task instructions"></textarea>
-  <input id="newTaskLink" type="url" placeholder="Task link">
-  <input id="newTaskReward" type="number" min="0" step="0.01" placeholder="Reward (₦)">
-  <button class="btn primary" onclick="createTask()">Create Task</button>
- </div>
-
- <div class="card">
-  <h3>Submission Reviews</h3>
-  <div id="adminSubmissions">Loading...</div>
- </div>
-
- <div class="card">
-  <h3>Complaint Reviews</h3>
-  <div id="adminComplaints">Loading...</div>
- </div>
-
- <div class="card">
-  <h3>Withdrawal Management</h3>
-  <div id="adminWithdrawals">Loading...</div>
- </div>
-</section>
-
-</main>
-
-<footer>
- <p>AHNUM TASK — Work. Earn. Withdraw.</p>
- <p>Customer Service</p>
- <a href="https://wa.me/" target="_blank">WhatsApp Support</a>
- <a href="https://t.me/" target="_blank">Telegram Support</a>
-</footer>
-
-<script>
-/* SUPABASE */
-const SUPABASE_URL="https://qvtyinfpsckvbojouapk.supabase.co";
-const SUPABASE_KEY="sb_publishable_3RaREsT5T9li9zPVVi3kYQ_wCUc7Ji1";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-const TON_NGN_RATE=1400;
-const TASK_TIMER_SECONDS=60;
-
-let currentUser=null;
-let currentProfile=null;
-let taskTimers={};
-let taskOpenState={};
-let taskOpenedLinks={};
-let cachedSubmissions=[];
-let isAdmin=false;
-let currentAccountType="normal_user";
-
-function money(v){
- return "₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function esc(v){
- return String(v??"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
-}
-function notify(m){alert(m)}
-
-function toggleMenu(){
- document.getElementById("navigation").classList.toggle("open");
-}
-function showAuthBox(id){
- ["loginBox","signupBox","otpBox","forgotBox","resetPasswordBox"].forEach(x=>{
-  document.getElementById(x).classList.toggle("hidden",x!==id);
- });
-}
-function showLogin(){showAuthBox("loginBox")}
-function showSignup(){showAuthBox("signupBox")}
-function showForgotPassword(){showAuthBox("forgotBox")}
-
-/* AUTH */
-async function signup(){
- const name=document.getElementById("signupName").value.trim();
- const email=document.getElementById("signupEmail").value.trim();
- const password=document.getElementById("signupPassword").value;
- const referral=document.getElementById("signupReferral").value.trim();
- const accountType=document.getElementById("signupAccountType").value;
-
- if(!name||!email||password.length<6){
-  notify("Please enter your name, email and a password of at least 6 characters.");
-  return;
- }
-
- const {data,error}=await db.auth.signUp({
-  email,password,
-  options:{
-   emailRedirectTo:location.origin+location.pathname,
-   data:{
-    full_name:name,
-    referral_code:referral||null,
-    account_type:accountType
-   }
+function generateReferralCode(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for(let i=0;i<8;i++){
+    code += chars[Math.floor(Math.random()*chars.length)];
   }
- });
-
- if(error){notify(error.message);return}
-
- document.getElementById("otpEmail").value=email;
- showAuthBox("otpBox");
- notify("Registration started. Check your email for the verification code.");
+  return code;
 }
 
-async function verifyOTP(){
- const email=document.getElementById("otpEmail").value.trim();
- const token=document.getElementById("otpCode").value.trim();
- const {data,error}=await db.auth.verifyOtp({email,token,type:"signup"});
- if(error){notify(error.message);return}
- currentUser=data.user;
- await afterLogin();
-}
-
-async function resendOTP(){
- const email=document.getElementById("otpEmail").value.trim();
- const {error}=await db.auth.resend({type:"signup",email});
- if(error)notify(error.message);
- else notify("Verification code sent.");
-}
-
-async function login(){
- const email=document.getElementById("loginEmail").value.trim();
- const password=document.getElementById("loginPassword").value;
- const {data,error}=await db.auth.signInWithPassword({email,password});
- if(error){notify(error.message);return}
- currentUser=data.user;
- await afterLogin();
-}
-
-async function sendResetEmail(){
- const email=document.getElementById("forgotEmail").value.trim();
- if(!email){notify("Enter your email address.");return}
- const {error}=await db.auth.resetPasswordForEmail(email,{
-  redirectTo:location.origin+location.pathname
- });
- if(error){notify(error.message);return}
- notify("Password reset link sent. Check your inbox and spam folder.");
-}
-
-async function saveNewPassword(){
- const p=document.getElementById("newPassword").value;
- const c=document.getElementById("confirmNewPassword").value;
- if(p.length<6){notify("Password must contain at least 6 characters.");return}
- if(p!==c){notify("Passwords do not match.");return}
- const {error}=await db.auth.updateUser({password:p});
- if(error){notify(error.message);return}
- notify("Password updated successfully.");
- showLogin();
-}
-
-db.auth.onAuthStateChange((event)=>{
- if(event==="PASSWORD_RECOVERY"){
-  document.body.classList.add("logged-in");
-  showAuthBox("resetPasswordBox");
- }
-});
-
-/* PROFILE */
-async function afterLogin(){
- if(!currentUser){
-  const {data}=await db.auth.getUser();
-  currentUser=data.user;
- }
- if(!currentUser)return;
-
- currentAccountType=currentUser.user_metadata?.account_type||"normal_user";
-
- const {data:profile}=await db.from("profiles")
-  .select("*").eq("id",currentUser.id).maybeSingle();
- currentProfile=profile;
-
- const {data:roles}=await db.from("user_roles")
-  .select("role").eq("user_id",currentUser.id);
- isAdmin=(roles||[]).some(r=>r.role==="admin");
-
- // Show navigation only AFTER successful login
- document.body.classList.add("logged-in");
- document.getElementById("navigation").classList.remove("open");
- document.getElementById("authPage").classList.add("hidden");
-
- updateAccountDisplay();
- page("dashboard");
- await loadDashboard();
- await loadBanner();
-}
-
-function updateAccountDisplay(){
- const name=currentUser?.user_metadata?.full_name||currentUser?.email||"User";
- document.getElementById("dashName").textContent=name;
- document.getElementById("accountEmail").textContent=currentUser?.email||"";
- document.getElementById("accountUID").textContent=currentUser?.id||"";
-
- const label=currentAccountType==="community_leader"?"Community Leader":"Normal User";
- const badgeClass=currentAccountType==="community_leader"?"leader":"normal";
-
- document.getElementById("accountTypeText").textContent=label;
- document.getElementById("accountTypeBadge").innerHTML=`<span class="badge ${badgeClass}">${label}</span>`;
- document.getElementById("accountBadge").innerHTML=`<span class="badge ${badgeClass}">${label}</span>`;
-}
-
-/* LOGOUT */
-async function logout(){
- await db.auth.signOut();
- currentUser=null;
- currentProfile=null;
- isAdmin=false;
- cachedSubmissions=[];
- document.body.classList.remove("logged-in");
- document.getElementById("navigation").classList.remove("open");
- document.querySelectorAll("section.page").forEach(s=>s.classList.remove("active"));
- document.getElementById("authPage").classList.remove("hidden");
- showLogin();
-}
-
-/* NAVIGATION */
-function page(name){
- if(!currentUser)return;
-
- document.querySelectorAll("section.page").forEach(s=>s.classList.remove("active"));
- document.getElementById("page-"+name)?.classList.add("active");
-
- document.querySelectorAll("nav button[data-page]").forEach(b=>{
-  b.classList.toggle("active",b.dataset.page===name);
- });
-
- document.getElementById("navigation").classList.remove("open");
-
- if(name==="dashboard")loadDashboard();
- if(name==="tasks")loadTasks();
- if(name==="history")loadHistory();
- if(name==="wallet")loadWallet();
- if(name==="invite")loadReferral();
- if(name==="withdraw")loadWithdrawals();
-
- if(name==="admin"){
-  if(!isAdmin){notify("Admin access only.");page("dashboard");return}
-  loadAdmin();
- }
-}
-
-/* SUBMISSIONS */
-async function fetchMySubmissions(){
- const {data,error}=await db.from("task_submissions")
-  .select("*,tasks(title,reward)")
-  .eq("user_id",currentUser.id)
-  .order("created_at",{ascending:false});
- if(error){console.error(error);return []}
- cachedSubmissions=data||[];
- return cachedSubmissions;
-}
-function approvedForTask(taskId){
- return cachedSubmissions.filter(s=>s.task_id===taskId&&s.status==="approved").length;
-}
-function pendingForTask(taskId){
- return cachedSubmissions.some(s=>s.task_id===taskId&&s.status==="pending");
-}
-function rejectedForTask(taskId){
- return cachedSubmissions.filter(s=>s.task_id===taskId&&s.status==="rejected");
-}
-
-/* DASHBOARD */
-async function loadDashboard(){
- if(!currentUser)return;
- const subs=await fetchMySubmissions();
- const approved=subs.filter(s=>s.status==="approved");
- const pending=subs.filter(s=>s.status==="pending");
- const total=approved.reduce((sum,s)=>sum+Number(s.reward||0),0);
-
- document.getElementById("dashEarned").textContent=money(total);
- document.getElementById("dashPending").textContent=pending.length;
- document.getElementById("dashApprovedCount").textContent=approved.length;
-
- const {data:transactions}=await db.from("reward_transactions")
-  .select("amount").eq("user_id",currentUser.id);
- const balance=(transactions||[]).reduce((sum,t)=>sum+Number(t.amount||0),0);
- document.getElementById("dashBalance").textContent=money(balance);
-
- document.getElementById("dashboardTaskStatus").innerHTML=subs.length?
-  subs.slice(0,5).map(s=>`
-   <div class="history-item ${esc(s.status)}">
-    <strong>${esc(s.tasks?.title||"Task")}</strong>
-    <span class="badge ${esc(s.status)}">${esc(s.status)}</span>
-    <div class="small">${new Date(s.created_at).toLocaleString()}</div>
-   </div>
-  `).join(""):"No task submissions yet.";
-}
-
-/* TASKS */
-/* FIX: No filtering on a non-existent tasks.active column */
-async function loadTasks(){
- if(!currentUser)return;
- await fetchMySubmissions();
-
- const {data:tasks,error}=await db.from("tasks")
-  .select("*")
-  .order("created_at",{ascending:false});
-
- if(error){
-  document.getElementById("tasksContainer").innerHTML=esc(error.message);
-  return;
- }
-
- if(!tasks?.length){
-  document.getElementById("tasksContainer").innerHTML="No tasks available currently.";
-  return;
- }
-
- document.getElementById("tasksContainer").innerHTML=tasks.map(t=>{
-  const count=approvedForTask(t.id);
-  const pending=pendingForTask(t.id);
-  const rejected=rejectedForTask(t.id);
-  const eligible=currentAccountType==="community_leader"&&count>=10;
-
-  return `
-   <div class="task-card" style="margin-bottom:14px">
-    <h3>${esc(t.title)}</h3>
-    <p>${esc(t.description||"")}</p>
-    <div class="reward">Reward: ${money(t.reward)}</div>
-    <div class="small">Approved completions of this task: <strong>${count}</strong></div>
-
-    ${eligible?`
-     <p><span class="badge leader">20% COMMUNITY LEADER BONUS ELIGIBLE</span></p>
-    `:currentAccountType==="community_leader"?`
-     <p class="small">Community Leader milestone: ${count}/10 approved completions of this task.</p>
-    `:""}
-
-    ${pending?`
-     <div class="notice">Your submission for this task is awaiting admin review. You cannot submit this task again until it is reviewed.</div>
-    `:`
-     <div class="task-actions">
-      <button class="btn primary" onclick="openTask('${esc(t.id)}')">Open Task</button>
-      <button class="btn gold" onclick="showTaskSubmit('${esc(t.id)}')">Submit Proof</button>
-     </div>
-    `}
-
-    <div id="taskArea_${t.id}"></div>
-
-    ${rejected.length?`
-     <div class="notice">
-      Your previous submission was rejected.
-      You may redo the task and submit again or submit a complaint.
-      <br>
-      <button class="btn red" onclick="openComplaint('${esc(t.id)}')">Submit Complaint</button>
-     </div>
-    `:""}
-   </div>
-  `;
- }).join("");
-}
-
-async function openTask(taskId){
- const {data:task}=await db.from("tasks").select("*").eq("id",taskId).single();
- if(!task)return;
-
- taskOpenState[taskId]=true;
- taskOpenedLinks[taskId]=task.link;
- const area=document.getElementById("taskArea_"+taskId);
- if(!area)return;
-
- area.innerHTML=`
-  <div class="notice">Task link unlocked. Timer starts when you click the external link.</div>
-  <p><a href="${esc(task.link)}" target="_blank" rel="noopener" onclick="startTaskTimer('${esc(taskId)}')">🔗 Open External Task Link</a></p>
-  <div id="timer_${taskId}">Timer: Not started</div>
-  <div id="submitArea_${taskId}"></div>
- `;
-}
-
-function startTaskTimer(taskId){
- if(taskTimers[taskId])return;
- let remaining=TASK_TIMER_SECONDS;
- const display=document.getElementById("timer_"+taskId);
- if(display)display.textContent="Please wait "+remaining+" seconds before submitting proof.";
-
- taskTimers[taskId]=setInterval(()=>{
-  remaining--;
-  if(display)display.textContent="Please wait "+remaining+" seconds before submitting proof.";
-  if(remaining<=0){
-   clearInterval(taskTimers[taskId]);
-   delete taskTimers[taskId];
-   const submit=document.getElementById("submitArea_"+taskId);
-   if(submit){
-    submit.innerHTML=`
-     <div class="notice">Timer completed. You may submit screenshot proof.</div>
-     <input type="file" accept="image/*" id="proof_${taskId}">
-     <button class="btn green" onclick="submitProof('${esc(taskId)}')">Submit Proof</button>
-    `;
-   }
-  }
- },1000);
-}
-
-function showTaskSubmit(taskId){
- if(!taskOpenState[taskId]){notify("Please open the task link first.");return}
- if(taskTimers[taskId]){notify("Please wait for the timer to finish.");return}
- const submit=document.getElementById("submitArea_"+taskId);
- if(submit&&submit.innerHTML)submit.scrollIntoView({behavior:"smooth",block:"center"});
- else notify("Open the task link and complete the 60-second timer first.");
-}
-
-async function submitProof(taskId){
- const file=document.getElementById("proof_"+taskId)?.files?.[0];
- if(!file){notify("Please select a screenshot.");return}
- if(!taskOpenState[taskId]){notify("Open the task first.");return}
- if(pendingForTask(taskId)){notify("You already have a pending submission for this task.");return}
-
- const {data:task,error:taskError}=await db.from("tasks").select("*").eq("id",taskId).single();
- if(taskError){notify(taskError.message);return}
-
- const path=`${currentUser.id}/${taskId}/${Date.now()}_${file.name.replace(/[^\w.-]/g,"_")}`;
- const {error:uploadError}=await db.storage.from("task-proofs").upload(path,file);
- if(uploadError){notify(uploadError.message);return}
-
- const {data:urlData}=db.storage.from("task-proofs").getPublicUrl(path);
- const {error}=await db.from("task_submissions").insert({
-  user_id:currentUser.id,task_id:taskId,screenshot_url:urlData.publicUrl,status:"pending",reward:0
- });
- if(error){notify(error.message);return}
-
- taskOpenState[taskId]=false;
- notify("Proof submitted successfully. Waiting for admin review.");
- await loadTasks();
- await loadDashboard();
- await loadHistory();
-}
-
-/* COMPLAINTS */
-async function openComplaint(taskId){
- const reason=prompt("Explain why you are complaining about the rejected submission:");
- if(!reason?.trim())return;
-
- const {data:last}=await db.from("task_submissions")
-  .select("id").eq("user_id",currentUser.id).eq("task_id",taskId)
-  .eq("status","rejected").order("created_at",{ascending:false})
-  .limit(1).maybeSingle();
-
- if(!last){notify("Rejected submission not found.");return}
-
- const {error}=await db.from("task_submission_complaints").insert({
-  user_id:currentUser.id,submission_id:last.id,task_id:taskId,reason,status:"pending"
- });
- if(error){notify(error.message);return}
- notify("Complaint submitted. You can redo the task.");
- loadTasks();loadHistory();
-}
-
-/* HISTORY */
-async function loadHistory(){
- if(!currentUser)return;
- const subs=await fetchMySubmissions();
- const container=document.getElementById("historyContainer");
-
- if(!subs.length){container.innerHTML="No submissions yet.";return}
-
- container.innerHTML=subs.map(s=>{
-  const status=s.status||"pending";
-  return `
-   <div class="history-item ${esc(status)}">
-    <h3>${esc(s.tasks?.title||"Task")}</h3>
-    <span class="badge ${esc(status)}">${esc(status.toUpperCase())}</span>
-    <p class="small">Submission ID: ${esc(s.id)}</p>
-    <p class="small">User ID: ${esc(s.user_id)}</p>
-    <p class="small">Submitted: ${new Date(s.created_at).toLocaleString()}</p>
-    ${status==="approved"?`<p>Reward: <strong>${money(s.reward)}</strong></p>`:""}
-    ${status==="rejected"?`
-     <strong>Admin rejection reason:</strong>
-     <p>${esc(s.rejection_reason||s.admin_note||"No rejection reason provided.")}</p>
-     <button class="btn red" onclick="openComplaint('${esc(s.task_id)}')">Submit Complaint</button>
-     <button class="btn primary" onclick="page('tasks')">Redo Task</button>
-    `:""}
-    ${status==="pending"?`<p class="small">Your submission is being reviewed.</p>`:""}
-   </div>
-  `;
- }).join("");
-}
-
-/* WALLET */
-async function loadWallet(){
- if(!currentUser)return;
- const {data:tx,error}=await db.from("reward_transactions")
-  .select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
- if(error){document.getElementById("transactionHistory").textContent=error.message;return}
-
- const balance=(tx||[]).reduce((sum,t)=>sum+Number(t.amount||0),0);
- document.getElementById("walletBalance").textContent=money(balance);
- document.getElementById("walletTotal").textContent=money((tx||[]).filter(t=>Number(t.amount)>0).reduce((sum,t)=>sum+Number(t.amount),0));
-
- document.getElementById("transactionHistory").innerHTML=tx?.length?
-  tx.map(t=>`
-   <div class="history-item">
-    <strong>${esc(t.description||t.type||"Transaction")}</strong>
-    <p>${money(t.amount)}</p>
-    <small>${new Date(t.created_at).toLocaleString()}</small>
-   </div>
-  `).join(""):"No transactions yet.";
-}
-
-/* REFERRALS */
-/* FIX: Referral code is the referrer's full UUID.
-   referred_by is queried using the current user's UUID,
-   not a short text referral code. */
-async function loadReferral(){
- if(!currentUser)return;
-
- const code=currentUser.id;
- document.getElementById("referralCode").textContent=code;
-
- const {data:profiles,error}=await db.from("profiles")
-  .select("*")
-  .eq("referred_by",currentUser.id);
-
- if(error){
-  document.getElementById("referralList").textContent=error.message;
-  return;
- }
-
- const referrals=profiles||[];
- document.getElementById("referralCount").textContent=referrals.length;
-
- let qualified=0;
- let rows=[];
-
- for(const p of referrals){
-  const {count}=await db.from("task_submissions")
-   .select("*",{count:"exact",head:true})
-   .eq("user_id",p.id)
-   .eq("status","approved");
-
-  const n=count||0;
-  if(n>=2)qualified++;
-  rows.push({p,n});
- }
-
- document.getElementById("qualifiedReferralCount").textContent=qualified;
-
- document.getElementById("referralList").innerHTML=rows.map(r=>`
-  <div class="history-item">
-   <strong>${esc(r.p.full_name||"Referral")}</strong>
-   <div class="small">Approved Tasks: ${r.n}</div>
-   <span class="badge ${r.n>=2?"approved":"pending"}">
-    ${r.n>=2?"Successful Referral":"Not Yet Qualified"}
-   </span>
-  </div>
- `).join("");
-}
-
-function copyReferral(){
- const code=document.getElementById("referralCode").textContent;
- navigator.clipboard.writeText(code)
-  .then(()=>notify("Referral code copied."))
-  .catch(()=>notify("Unable to copy. Please copy it manually."));
-}
-
-/* WITHDRAWAL */
-async function loadWithdrawals(){
- if(!currentUser)return;
- const {data:tx}=await db.from("reward_transactions").select("amount").eq("user_id",currentUser.id);
- const balance=(tx||[]).reduce((sum,t)=>sum+Number(t.amount||0),0);
- document.getElementById("withdrawBalance").textContent=money(balance);
-
- const {data:requests,error}=await db.from("withdrawal_requests")
-  .select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
- if(error){document.getElementById("withdrawalHistory").textContent=error.message;return}
-
- document.getElementById("withdrawalHistory").innerHTML=requests?.length?
-  requests.map(r=>`
-   <div class="history-item">
-    <strong>${money(r.amount)}</strong>
-    <span class="badge ${esc(r.status)}">${esc(r.status)}</span>
-    <p>${esc(r.bank_name||"")} — ${esc(r.account_number||"")}</p>
-    <small>${new Date(r.created_at).toLocaleString()}</small>
-   </div>
-  `).join(""):"No withdrawal requests yet.";
-}
+/* ========== WITHDRAWAL: ORIGINAL STRUCTURE ========== */
 
 async function submitWithdrawal(){
- const bank=document.getElementById("withdrawBank").value.trim();
- const name=document.getElementById("withdrawAccountName").value.trim();
- const number=document.getElementById("withdrawAccountNumber").value.trim();
- const amount=Number(document.getElementById("withdrawAmount").value);
+  const method = document.getElementById("withdrawMethod").value;
+  const amount = Number(document.getElementById("withdrawAmount").value);
 
- if(!bank||!name||!number||!amount||amount<=0){
-  notify("Fill all withdrawal fields correctly.");return;
- }
+  let account_details = {};
 
- const {error}=await db.from("withdrawal_requests").insert({
-  user_id:currentUser.id,bank_name:bank,account_name:name,
-  account_number:number,amount,status:"pending"
- });
- if(error){notify(error.message);return}
- notify("Withdrawal request submitted.");
- loadWithdrawals();
-}
-
-/* BANNER */
-async function loadBanner(){
- const {data}=await db.from("site_settings").select("value").eq("key","main_banner").maybeSingle();
- if(data?.value){
-  const img=document.getElementById("mainBannerImage");
-  img.src=data.value;
-  img.style.display="block";
- }
-}
-
-async function uploadBanner(){
- if(!isAdmin){notify("Admin access only.");return}
- const file=document.getElementById("bannerFile").files[0];
- if(!file){notify("Select a banner image.");return}
-
- const path=`main-banner-${Date.now()}_${file.name.replace(/[^\w.-]/g,"_")}`;
- const {error:uploadError}=await db.storage.from("site-assets").upload(path,file,{upsert:true});
- if(uploadError){document.getElementById("bannerAdminMessage").textContent=uploadError.message;return}
-
- const {data:url}=db.storage.from("site-assets").getPublicUrl(path);
- const {error}=await db.from("site_settings").upsert({
-  key:"main_banner",value:url.publicUrl,updated_at:new Date().toISOString()
- });
- if(error){document.getElementById("bannerAdminMessage").textContent=error.message;return}
- notify("Main banner updated.");
- await loadBanner();
-}
-
-/* ADMIN */
-async function loadAdmin(){
- if(!isAdmin)return;
-
- const {data:subs}=await db.from("task_submissions")
-  .select("*,tasks(title,reward),profiles(full_name,email)")
-  .eq("status","pending").order("created_at",{ascending:true});
-
- const {data:complaints}=await db.from("task_submission_complaints")
-  .select("*,profiles(full_name)").eq("status","pending").order("created_at",{ascending:true});
-
- const {data:withdrawals}=await db.from("withdrawal_requests")
-  .select("*,profiles(full_name)").eq("status","pending").order("created_at",{ascending:true});
-
- document.getElementById("adminPendingCount").textContent=subs?.length||0;
- document.getElementById("adminComplaintCount").textContent=complaints?.length||0;
- document.getElementById("adminWithdrawalCount").textContent=withdrawals?.length||0;
-
- document.getElementById("adminSubmissions").innerHTML=subs?.length?await renderAdminSubmissions(subs):"No pending submissions.";
-
- document.getElementById("adminComplaints").innerHTML=complaints?.length?
-  complaints.map(c=>`
-   <div class="history-item">
-    <strong>Complaint from ${esc(c.profiles?.full_name||c.user_id)}</strong>
-    <p>${esc(c.reason)}</p>
-    <button class="btn green" onclick="resolveComplaint('${esc(c.id)}','resolved')">Resolve</button>
-    <button class="btn red" onclick="resolveComplaint('${esc(c.id)}','dismissed')">Dismiss</button>
-   </div>
-  `).join(""):"No pending complaints.";
-
- document.getElementById("adminWithdrawals").innerHTML=withdrawals?.length?
-  withdrawals.map(w=>`
-   <div class="history-item">
-    <strong>${esc(w.profiles?.full_name||w.user_id)}</strong>
-    <p>Amount: ${money(w.amount)}</p>
-    <p>${esc(w.bank_name)} — ${esc(w.account_name)} — ${esc(w.account_number)}</p>
-    <button class="btn green" onclick="updateWithdrawal('${esc(w.id)}','approved')">Approve</button>
-    <button class="btn red" onclick="updateWithdrawal('${esc(w.id)}','rejected')">Reject</button>
-   </div>
-  `).join(""):"No pending withdrawals.";
-}
-
-async function renderAdminSubmissions(subs){
- let html="";
- for(const s of subs){
-  let proof=s.screenshot_url||"";
-  if(proof.includes("/storage/v1/object/")){
-   const parts=proof.split("/task-proofs/");
-   if(parts[1]){
-    const {data}=await db.storage.from("task-proofs").createSignedUrl(parts[1],3600);
-    if(data?.signedUrl)proof=data.signedUrl;
-   }
+  if(method === "OPay" || method === "PalmPay"){
+    account_details = {
+      account_name: document.getElementById("holderName").value.trim(),
+      account_number: document.getElementById("bankNumber").value.trim()
+    };
+  }
+  else if(method === "PayPal"){
+    account_details = {
+      email: document.getElementById("payEmail").value.trim()
+    };
+  }
+  else if(method === "TON Wallet"){
+    account_details = {
+      wallet_address: document.getElementById("tonAddress").value.trim()
+    };
   }
 
-  html+=`
-   <div class="history-item pending">
-    <strong>${esc(s.tasks?.title||"Task")}</strong>
-    <p>User: ${esc(s.profiles?.full_name||s.user_id)}</p>
-    <p>UID: ${esc(s.user_id)}</p>
-    <p>Submitted: ${new Date(s.created_at).toLocaleString()}</p>
-    ${proof?`<a href="${esc(proof)}" target="_blank">View Screenshot</a><img class="proof-preview" src="${esc(proof)}">`:""}
-    <textarea id="reject_${s.id}" placeholder="Reason for rejection"></textarea>
-    <div class="task-actions">
-     <button class="btn green" onclick="approveSubmission('${esc(s.id)}')">Approve</button>
-     <button class="btn red" onclick="rejectSubmission('${esc(s.id)}')">Reject</button>
+  if(!method || !amount || amount <= 0){
+    alert("Please enter a valid withdrawal amount and payment method.");
+    return;
+  }
+
+  const {error} = await db.from("withdrawal_requests").insert({
+    user_id: currentUser.id,
+    method: method,
+    amount: amount,
+    account_details: account_details,
+    status: "pending"
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  alert("Withdrawal request submitted successfully.");
+  loadWithdrawals();
+}
+
+/* ========== AVAILABLE TASKS ========== */
+/* Hide every task that already has a submission.
+   Rejected tasks and complaint/redo actions belong
+   ONLY in Task History. */
+
+async function loadTasks(){
+  if(!currentUser) return;
+
+  const {data:subs,error:subError} = await db.from("task_submissions")
+    .select("task_id,status")
+    .eq("user_id",currentUser.id);
+
+  if(subError){
+    document.getElementById("tasksContainer").textContent = subError.message;
+    return;
+  }
+
+  const submittedTaskIds = new Set((subs||[]).map(s=>s.task_id));
+
+  const {data:tasks,error} = await db.from("tasks")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    document.getElementById("tasksContainer").textContent = error.message;
+    return;
+  }
+
+  const availableTasks = (tasks||[]).filter(t=>!submittedTaskIds.has(t.id));
+
+  if(!availableTasks.length){
+    document.getElementById("tasksContainer").innerHTML =
+      "<p>You have completed or submitted all currently available tasks.</p>";
+    return;
+  }
+
+  document.getElementById("tasksContainer").innerHTML =
+    availableTasks.map(t=>`
+      <div class="task-card">
+        <h3>${esc(t.title)}</h3>
+        <p>${esc(t.description||"")}</p>
+        <div class="reward">Reward: ${money(t.reward)}</div>
+
+        <button class="btn primary" onclick="openTask('${esc(t.id)}')">
+          Open Task
+        </button>
+
+        <div id="taskArea_${t.id}"></div>
+      </div>
+    `).join("");
+}
+
+/* ========== TASK HISTORY ========== */
+/* Rejected task redo and complaint buttons appear here,
+   not on Available Tasks. */
+
+async function loadHistory(){
+  if(!currentUser) return;
+
+  const {data:subs,error} = await db.from("task_submissions")
+    .select("*,tasks(title,reward)")
+    .eq("user_id",currentUser.id)
+    .order("created_at",{ascending:false});
+
+  const container = document.getElementById("historyContainer");
+
+  if(error){
+    container.textContent = error.message;
+    return;
+  }
+
+  if(!subs || !subs.length){
+    container.innerHTML = "No task history yet.";
+    return;
+  }
+
+  container.innerHTML = subs.map(s=>`
+    <div class="history-item ${esc(s.status)}">
+      <h3>${esc(s.tasks?.title||"Task")}</h3>
+      <span class="badge ${esc(s.status)}">${esc(s.status.toUpperCase())}</span>
+
+      <p>Submitted: ${new Date(s.created_at).toLocaleString()}</p>
+
+      ${s.status==="approved"?`
+        <p>Reward: <strong>${money(s.reward)}</strong></p>
+      `:""}
+
+      ${s.status==="rejected"?`
+        <p><strong>Reason for rejection:</strong></p>
+        <p>${esc(s.rejection_reason||"No reason provided.")}</p>
+
+        <button class="btn red" onclick="openComplaint('${esc(s.task_id)}')">
+          Submit Complaint
+        </button>
+
+        <button class="btn primary" onclick="redoTask('${esc(s.task_id)}')">
+          Redo Task
+        </button>
+      `:""}
+
+      ${s.status==="pending"?`
+        <p>Your submission is awaiting review.</p>
+      `:""}
     </div>
-   </div>
+  `).join("");
+}
+
+/* Redo directly from history, without putting rejected tasks
+   back into the Available Tasks list. */
+
+async function redoTask(taskId){
+  const {data:task,error} = await db.from("tasks")
+    .select("*")
+    .eq("id",taskId)
+    .single();
+
+  if(error || !task){
+    alert("Unable to open this task.");
+    return;
+  }
+
+  page("history");
+
+  taskOpenState[taskId] = true;
+  taskOpenedLinks[taskId] = task.link;
+
+  const container = document.getElementById("historyContainer");
+
+  const redoBox = document.createElement("div");
+  redoBox.className = "card";
+  redoBox.innerHTML = `
+    <h3>Redo: ${esc(task.title)}</h3>
+    <p>${esc(task.description||"")}</p>
+    <p>
+      <a href="${esc(task.link)}" target="_blank"
+         onclick="startTaskTimer('${esc(taskId)}')">
+        Open Task Link
+      </a>
+    </p>
+    <div id="timer_${taskId}">Timer: Not started</div>
+    <div id="submitArea_${taskId}"></div>
   `;
- }
- return html;
+
+  container.prepend(redoBox);
+  redoBox.scrollIntoView({behavior:"smooth"});
 }
-
-async function createTask(){
- if(!isAdmin)return;
- const title=document.getElementById("newTaskTitle").value.trim();
- const description=document.getElementById("newTaskDescription").value.trim();
- const link=document.getElementById("newTaskLink").value.trim();
- const reward=Number(document.getElementById("newTaskReward").value);
-
- if(!title||!link||reward<0){notify("Enter task title, link and reward.");return}
-
- const {error}=await db.from("tasks").insert({title,description,link,reward});
- if(error){notify(error.message);return}
-
- notify("Task created.");
- document.getElementById("newTaskTitle").value="";
- document.getElementById("newTaskDescription").value="";
- document.getElementById("newTaskLink").value="";
- document.getElementById("newTaskReward").value="";
-}
-
-async function approveSubmission(id){
- if(!isAdmin)return;
- const {error}=await db.rpc("admin_approve_submission",{submission_id:id});
- if(error){notify(error.message);return}
- notify("Submission approved.");
- loadAdmin();
-}
-
-async function rejectSubmission(id){
- if(!isAdmin)return;
- const reason=document.getElementById("reject_"+id)?.value.trim();
- if(!reason){notify("Enter a rejection reason.");return}
- const {error}=await db.rpc("admin_reject_submission",{submission_id:id,rejection_reason:reason});
- if(error){notify(error.message);return}
- notify("Submission rejected.");
- loadAdmin();
-}
-
-async function resolveComplaint(id,status){
- if(!isAdmin)return;
- const {error}=await db.from("task_submission_complaints").update({status}).eq("id",id);
- if(error){notify(error.message);return}
- notify("Complaint updated.");
- loadAdmin();
-}
-
-async function updateWithdrawal(id,status){
- if(!isAdmin)return;
- const {error}=await db.rpc("admin_set_withdrawal_status",{withdrawal_id:id,new_status:status});
- if(error){notify(error.message);return}
- notify("Withdrawal status updated.");
- loadAdmin();
-}
-
-/* INITIAL SESSION */
-(async()=>{
- const {data}=await db.auth.getSession();
- if(data?.session?.user){
-  currentUser=data.session.user;
-  await afterLogin();
- }else{
-  // Keep the navigation hidden while signed out
-  document.body.classList.remove("logged-in");
-  document.getElementById("navigation").classList.remove("open");
- }
-})();
-</script>
-</body>
-</html>
