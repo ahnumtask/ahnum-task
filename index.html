@@ -96,8 +96,15 @@ th{color:var(--muted)}
 .rejected-reason{font-size:13px;line-height:1.5;margin:8px 0}
 .complaint-form{border-top:1px solid #f1caca;margin-top:12px;padding-top:12px}
 .complaint-form button{width:100%}
-.task-actions{display:flex;gap:8px;flex-wrap:wrap}
-.task-actions button{flex:1;min-width:120px}
+
+.password-wrap{position:relative}
+.password-wrap input{padding-right:55px}
+.password-toggle{
+  position:absolute;right:8px;top:7px;
+  padding:7px 9px;background:#eef3f8;color:var(--navy);
+  border-radius:8px;font-size:12px
+}
+
 @media(max-width:600px){
   header{padding:15px}
   nav{top:68px;right:15px}
@@ -141,7 +148,10 @@ th{color:var(--muted)}
     <label>Email address</label>
     <input id="loginEmail" type="email" required>
     <label>Password</label>
-    <input id="loginPassword" type="password" required>
+    <div class="password-wrap">
+      <input id="loginPassword" type="password" required>
+      <button class="password-toggle" type="button" data-password="loginPassword">Show</button>
+    </div>
     <button class="primary" type="submit">Log in</button>
   </form>
 
@@ -152,7 +162,10 @@ th{color:var(--muted)}
     <label>Email address</label>
     <input id="signupEmail" type="email" autocomplete="email" required>
     <label>Password</label>
-    <input id="signupPassword" type="password" minlength="8" autocomplete="new-password" required>
+    <div class="password-wrap">
+      <input id="signupPassword" type="password" minlength="8" autocomplete="new-password" required>
+      <button class="password-toggle" type="button" data-password="signupPassword">Show</button>
+    </div>
     <p class="small">Use at least 8 characters. A six-digit verification code will be sent to your email.</p>
     <button class="primary" type="submit">Register</button>
   </form>
@@ -180,10 +193,17 @@ th{color:var(--muted)}
     <button class="primary" data-goto="tasks">Explore tasks</button>
   </section>
 
-  <div class="grid">
-    <div class="card"><div class="label">Available balance</div><div class="stat" id="balance">0 TON</div></div>
-    <div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCount">0</div></div>
-    <div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCount">0</div></div>
+  <!-- Statistics are displayed only on Wallet and Withdraw pages. -->
+  <div class="grid page-stats hidden" id="walletStats">
+    <div class="card"><div class="label">Available balance</div><div class="stat" id="balanceWallet">0 TON</div></div>
+    <div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCountWallet">0</div></div>
+    <div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCountWallet">0</div></div>
+  </div>
+
+  <div class="grid page-stats hidden" id="withdrawStats">
+    <div class="card"><div class="label">Available balance</div><div class="stat" id="balanceWithdraw">0 TON</div></div>
+    <div class="card"><div class="label">Approved tasks</div><div class="stat" id="approvedCountWithdraw">0</div></div>
+    <div class="card"><div class="label">Pending submissions</div><div class="stat" id="pendingCountWithdraw">0</div></div>
   </div>
 
   <section id="page-home" class="page">
@@ -414,17 +434,9 @@ function removeTaskUrls(text){
     .trim();
 }
 
-/* USER/TASK-SPECIFIC TIMER AND REDO KEYS */
+/* USER/TASK-SPECIFIC TIMER KEY */
 function taskTimerKey(taskId){
   return `ahnum_task_click_${currentUser.id}_${taskId}`;
-}
-
-function taskRedoKey(taskId){
-  return `ahnum_task_redo_${currentUser.id}_${taskId}`;
-}
-
-function isTaskRedo(taskId){
-  return localStorage.getItem(taskRedoKey(taskId))==="true";
 }
 
 function getTaskClickTime(taskId){
@@ -504,17 +516,31 @@ function showApp(){
 
 $("menuToggle").onclick=()=> $("nav").classList.toggle("open");
 
+/* REMEMBER THE LAST PAGE SELECTED BY THE USER */
+const allowedPages=["home","tasks","wallet","invite","withdraw","account","admin"];
+
 function page(name){
+  if(!allowedPages.includes(name))name="home";
+
   if(name==="admin"&&!isAdmin){
     alert("Access denied.");
     return;
   }
+
+  localStorage.setItem("ahnum_last_page",name);
+
   document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
   $("page-"+name)?.classList.remove("hidden");
+
+  $("walletStats").classList.toggle("hidden",name!=="wallet");
+  $("withdrawStats").classList.toggle("hidden",name!=="withdraw");
+
   document.querySelectorAll("nav [data-page]").forEach(x=>{
     x.classList.toggle("active",x.dataset.page===name);
   });
+
   $("nav").classList.remove("open");
+
   if(name==="tasks")loadTasks();
   if(name==="wallet")loadWallet();
   if(name==="invite")loadReferral();
@@ -527,6 +553,19 @@ document.querySelectorAll("nav [data-page]").forEach(b=>{
 });
 document.querySelectorAll("[data-goto]").forEach(b=>{
   b.addEventListener("click",()=>page(b.dataset.goto));
+});
+
+/* PASSWORD VISIBILITY FOR LOGIN AND SIGNUP */
+document.querySelectorAll(".password-toggle").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const input=$(button.dataset.password);
+    if(!input)return;
+
+    const showing=input.type==="text";
+    input.type=showing?"password":"text";
+    button.textContent=showing?"Show":"Hide";
+    button.setAttribute("aria-label",showing?"Show password":"Hide password");
+  });
 });
 
 $("showLogin").onclick=()=>showAuth("login");
@@ -634,7 +673,12 @@ async function enter(user){
   showApp();
   await loadProfile();
   await loadDashboard();
-  page("home");
+
+  /* Restore the last selected page instead of always opening Dashboard. */
+  let savedPage=localStorage.getItem("ahnum_last_page")||"home";
+  if(!allowedPages.includes(savedPage))savedPage="home";
+  if(savedPage==="admin"&&!isAdmin)savedPage="home";
+  page(savedPage);
 }
 
 async function loadProfile(){
@@ -665,13 +709,20 @@ async function loadDashboard(){
     msg("globalMessage","Dashboard data could not load. Check the database setup and policies.","error");
     return;
   }
+
   const total=(rw.data||[]).reduce((s,r)=>s+Number(r.amount||0),0);
-  $("balance").textContent=money(total);
-  $("approvedCount").textContent=(sub.data||[]).filter(x=>x.status==="approved").length;
-  $("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").length;
+  const approved=(sub.data||[]).filter(x=>x.status==="approved").length;
+  const pending=(sub.data||[]).filter(x=>x.status==="pending").length;
+
+  $("balanceWallet").textContent=money(total);
+  $("balanceWithdraw").textContent=money(total);
+  $("approvedCountWallet").textContent=approved;
+  $("approvedCountWithdraw").textContent=approved;
+  $("pendingCountWallet").textContent=pending;
+  $("pendingCountWithdraw").textContent=pending;
 }
 
-/* TASK WORKFLOW: APPROVED, PENDING, REJECTED AND REDO */
+/* TASK WORKFLOW: APPROVED, PENDING AND REJECTED */
 async function loadTasks(){
   Object.values(taskIntervals).forEach(clearInterval);
   Object.keys(taskIntervals).forEach(k=>delete taskIntervals[k]);
@@ -732,7 +783,6 @@ async function loadTasks(){
     else if(pending)state="pending";
     else if(previous?.status==="rejected")state="rejected";
 
-    const redoStarted=state==="rejected"&&isTaskRedo(t.id);
     const safeUrl=esc(url);
 
     /* Approved task: permanent lock. No task actions. */
@@ -765,8 +815,8 @@ async function loadTasks(){
       `;
     }
 
-    /* Rejected task: show ONLY rejection, complaint and redo until redo clicked. */
-    if(state==="rejected"&&!redoStarted){
+    /* Rejected task: show rejection reason and complaint only. */
+    if(state==="rejected"){
       const complaint=complaintBySubmission[previous.id];
 
       return `
@@ -792,10 +842,6 @@ async function loadTasks(){
                    <p class="task-status" aria-live="polite"></p>
                  </form>`
             }
-
-            <div class="task-actions">
-              <button class="primary redoTask" type="button" data-id="${taskId}">Redo Task</button>
-            </div>
           </div>
           <div class="task-reward">${money(t.reward)}</div>
           <div class="task-naira">${naira(t.reward)}</div>
@@ -803,7 +849,7 @@ async function loadTasks(){
       `;
     }
 
-    /* Normal task, or a rejected task AFTER redo was clicked. */
+    /* Normal task. */
     return `
       <article class="task task-card" data-task-card="${taskId}" data-previous-status="${esc(state)}">
         <div class="task-top">
@@ -884,20 +930,6 @@ async function loadTasks(){
     form.addEventListener("submit",submitTaskProof);
   });
 
-  /* REDO: reset timer and restore a fresh task workflow. */
-  box.querySelectorAll(".redoTask").forEach(button=>{
-    button.addEventListener("click",async()=>{
-      const taskId=button.dataset.id;
-
-      /* Clear old timer and mark this task as being redone. */
-      localStorage.removeItem(taskTimerKey(taskId));
-      localStorage.setItem(taskRedoKey(taskId),"true");
-
-      /* Re-render the task: rejected screen disappears, Open returns. */
-      await loadTasks();
-    });
-  });
-
   /* Complaint form toggle. */
   box.querySelectorAll(".complaint-toggle").forEach(button=>{
     button.addEventListener("click",()=>{
@@ -911,17 +943,12 @@ async function loadTasks(){
     form.addEventListener("submit",submitComplaint);
   });
 
-  /* Restore timers after refresh ONLY for unlocked normal/redo cards. */
+  /* Restore timers after refresh for normal task cards. */
   box.querySelectorAll(".task-card[data-task-card]").forEach(card=>{
     const taskId=card.dataset.taskCard;
-    const previousStatus=card.dataset.previousStatus;
     const clickedAt=getTaskClickTime(taskId);
 
-    const canRestore=
-      previousStatus==="none"||
-      (previousStatus==="rejected"&&isTaskRedo(taskId));
-
-    if(clickedAt&&canRestore){
+    if(clickedAt){
       card.querySelector(".task-link-panel")?.classList.remove("hidden");
 
       const openButton=card.querySelector(".openTask");
@@ -1074,9 +1101,8 @@ async function submitTaskProof(e){
       return;
     }
 
-    /* Reset redo mode and timer after successful submission. */
+    /* Reset timer after successful submission. */
     localStorage.removeItem(taskTimerKey(taskId));
-    localStorage.removeItem(taskRedoKey(taskId));
 
     status.textContent="Your new proof has been submitted successfully for administrator review.";
     form.querySelectorAll("input").forEach(input=>input.disabled=true);
