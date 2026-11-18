@@ -16,6 +16,7 @@
 body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:bold}
+button:disabled{opacity:.6;cursor:not-allowed}
 .primary{background:var(--gold);color:#171717}
 .dark{background:var(--navy);color:white}
 .outline{background:white;border:1px solid var(--line);color:var(--ink)}
@@ -413,8 +414,17 @@ function removeTaskUrls(text){
     .trim();
 }
 
+/* USER/TASK-SPECIFIC TIMER AND REDO KEYS */
 function taskTimerKey(taskId){
   return `ahnum_task_click_${currentUser.id}_${taskId}`;
+}
+
+function taskRedoKey(taskId){
+  return `ahnum_task_redo_${currentUser.id}_${taskId}`;
+}
+
+function isTaskRedo(taskId){
+  return localStorage.getItem(taskRedoKey(taskId))==="true";
 }
 
 function getTaskClickTime(taskId){
@@ -661,7 +671,7 @@ async function loadDashboard(){
   $("pendingCount").textContent=(sub.data||[]).filter(x=>x.status==="pending").length;
 }
 
-/* TASK STATUS AND REDO WORKFLOW */
+/* TASK WORKFLOW: APPROVED, PENDING, REJECTED AND REDO */
 async function loadTasks(){
   Object.values(taskIntervals).forEach(clearInterval);
   Object.keys(taskIntervals).forEach(k=>delete taskIntervals[k]);
@@ -687,15 +697,19 @@ async function loadTasks(){
 
   const tasks=taskResult.data||[];
   const submissions=submissionResult.data||[];
-  const complaints=complaintResult.data||[];
 
-  const latestByTask={};
+  /* Complaints are optional until the complaint SQL table is created. */
+  const complaints=complaintResult.error?[]:(complaintResult.data||[]);
+
+  /* Keep all submissions grouped per task, newest first. */
+  const submissionsByTask={};
   submissions.forEach(s=>{
-    if(!latestByTask[s.task_id])latestByTask[s.task_id]=s;
+    if(!submissionsByTask[s.task_id])submissionsByTask[s.task_id]=[];
+    submissionsByTask[s.task_id].push(s);
   });
 
   const complaintBySubmission={};
-  (complaints||[]).forEach(c=>complaintBySubmission[c.submission_id]=c);
+  complaints.forEach(c=>complaintBySubmission[c.submission_id]=c);
 
   if(!tasks.length){
     box.innerHTML="<p class='small'>There are no active tasks right now.</p>";
@@ -705,58 +719,96 @@ async function loadTasks(){
   box.innerHTML=tasks.map(t=>{
     const url=getTaskUrl(t);
     const cleanDescription=removeTaskUrls(t.description)||"Complete this task and follow the link provided.";
-    const safeUrl=esc(url);
     const taskId=esc(t.id);
-    const previous=latestByTask[t.id];
+    const history=submissionsByTask[t.id]||[];
 
-    let stateHtml="";
-    let actionDisabled=false;
+    /* Approved wins permanently, then pending, then latest rejected. */
+    const approved=history.find(s=>s.status==="approved");
+    const pending=history.find(s=>s.status==="pending");
+    const previous=history[0]||null;
 
-    if(previous?.status==="pending"){
-      actionDisabled=true;
-      stateHtml=`
-        <div class="notice">
-          <b>Proof submitted.</b><br>
-          Your submission is waiting for administrator review. Please wait for the result.
-        </div>`;
-    }else if(previous?.status==="approved"){
-      actionDisabled=true;
-      stateHtml=`
-        <div class="notice success">
-          <b>Task completed!</b><br>
-          Your proof has been approved. This task is already completed.
-        </div>`;
-    }else if(previous?.status==="rejected"){
-      const complaint=complaintBySubmission[previous.id];
-      stateHtml=`
-        <div class="rejected-panel">
-          <h4>Your previous submission was rejected</h4>
-          <div class="rejected-reason">
-            <b>Admin reason:</b><br>
-            ${esc(previous.rejection_reason||"No rejection reason was provided.")}
+    let state="none";
+    if(approved)state="approved";
+    else if(pending)state="pending";
+    else if(previous?.status==="rejected")state="rejected";
+
+    const redoStarted=state==="rejected"&&isTaskRedo(t.id);
+    const safeUrl=esc(url);
+
+    /* Approved task: permanent lock. No task actions. */
+    if(state==="approved"){
+      return `
+        <article class="task task-card">
+          <h3>${esc(t.title)}</h3>
+          <div class="notice success">
+            <b>Task completed!</b><br>
+            Your proof has been approved. This task is permanently completed.
           </div>
-          ${
-            complaint
-            ? `<p class="small">Complaint status: <span class="pill wait">${esc(complaint.status||"pending")}</span></p>`
-            : `<button class="outline complaint-toggle" type="button" data-submission="${esc(previous.id)}">Submit Complaint</button>
-               <form class="complaint-form hidden" data-submission="${esc(previous.id)}">
-                 <label>Explain your complaint</label>
-                 <textarea name="complaint" maxlength="2000" placeholder="Explain why you believe your submission should be reviewed again…" required></textarea>
-                 <button class="dark" type="submit">Send Complaint</button>
-                 <p class="task-status" aria-live="polite"></p>
-               </form>`
-          }
-          <div class="task-actions">
-            <button class="primary redoTask" type="button" data-id="${taskId}">Redo Task</button>
-          </div>
-        </div>`;
+          <div class="task-reward">${money(t.reward)}</div>
+          <div class="task-naira">${naira(t.reward)}</div>
+        </article>
+      `;
     }
 
+    /* Pending task: lock only this task. */
+    if(state==="pending"){
+      return `
+        <article class="task task-card">
+          <h3>${esc(t.title)}</h3>
+          <div class="notice">
+            <b>Proof submitted.</b><br>
+            Your submission is waiting for administrator review. You cannot submit this task again while it is pending.
+          </div>
+          <div class="task-reward">${money(t.reward)}</div>
+          <div class="task-naira">${naira(t.reward)}</div>
+        </article>
+      `;
+    }
+
+    /* Rejected task: show ONLY rejection, complaint and redo until redo clicked. */
+    if(state==="rejected"&&!redoStarted){
+      const complaint=complaintBySubmission[previous.id];
+
+      return `
+        <article class="task task-card">
+          <h3>${esc(t.title)}</h3>
+          <div class="rejected-panel">
+            <h4>Your previous submission was rejected</h4>
+            <div class="rejected-reason">
+              <b>Admin reason:</b><br>
+              ${esc(previous.rejection_reason||"No rejection reason was provided.")}
+            </div>
+
+            ${
+              complaint
+              ? `<p class="small">Complaint status:
+                  <span class="pill wait">${esc(complaint.status||"pending")}</span>
+                 </p>`
+              : `<button class="outline complaint-toggle" type="button" data-submission="${esc(previous.id)}">Submit Complaint</button>
+                 <form class="complaint-form hidden" data-submission="${esc(previous.id)}">
+                   <label>Explain your complaint</label>
+                   <textarea name="complaint" maxlength="2000" placeholder="Explain why you believe your submission should be reviewed again…" required></textarea>
+                   <button class="dark" type="submit">Send Complaint</button>
+                   <p class="task-status" aria-live="polite"></p>
+                 </form>`
+            }
+
+            <div class="task-actions">
+              <button class="primary redoTask" type="button" data-id="${taskId}">Redo Task</button>
+            </div>
+          </div>
+          <div class="task-reward">${money(t.reward)}</div>
+          <div class="task-naira">${naira(t.reward)}</div>
+        </article>
+      `;
+    }
+
+    /* Normal task, or a rejected task AFTER redo was clicked. */
     return `
-      <article class="task task-card" data-task-card="${taskId}" data-previous-status="${esc(previous?.status||"none")}">
+      <article class="task task-card" data-task-card="${taskId}" data-previous-status="${esc(state)}">
         <div class="task-top">
           <div><h3>${esc(t.title)}</h3></div>
-          <button class="primary task-open-button openTask" type="button" data-id="${taskId}" ${actionDisabled?"disabled":""}>
+          <button class="primary task-open-button openTask" type="button" data-id="${taskId}">
             Open
           </button>
         </div>
@@ -767,8 +819,6 @@ async function loadTasks(){
           <div class="task-reward">${money(t.reward)}</div>
           <div class="task-naira">${naira(t.reward)}</div>
         </div>
-
-        ${stateHtml}
 
         <div class="task-link-panel hidden">
           ${
@@ -794,10 +844,13 @@ async function loadTasks(){
     `;
   }).join("");
 
+  /* OPEN BUTTON: reveals task link, but timer does NOT start here. */
   box.querySelectorAll(".openTask").forEach(button=>{
     button.addEventListener("click",()=>{
       const card=button.closest(".task-card");
       const panel=card.querySelector(".task-link-panel");
+      if(!panel)return;
+
       panel.classList.remove("hidden");
       button.textContent="Opened";
       button.disabled=true;
@@ -805,22 +858,24 @@ async function loadTasks(){
       const url=card.querySelector(".externalTaskLink");
       if(!url){
         card.querySelector(".task-timer").textContent="This task has no configured external link.";
-        return;
+      }else{
+        card.querySelector(".task-timer").textContent="Click the task link to start your 60-second timer.";
       }
-      startTaskTimer(button.dataset.id,card);
     });
   });
 
+  /* TIMER STARTS WHEN USER CLICKS THE ACTUAL EXTERNAL TASK LINK. */
   box.querySelectorAll(".externalTaskLink").forEach(link=>{
     link.addEventListener("click",()=>{
       const card=link.closest(".task-card");
       const taskId=card.dataset.taskCard;
-      let clickedAt=getTaskClickTime(taskId);
 
+      let clickedAt=getTaskClickTime(taskId);
       if(!clickedAt){
         clickedAt=Date.now();
         localStorage.setItem(taskTimerKey(taskId),String(clickedAt));
       }
+
       startTaskTimer(taskId,card);
     });
   });
@@ -829,40 +884,21 @@ async function loadTasks(){
     form.addEventListener("submit",submitTaskProof);
   });
 
+  /* REDO: reset timer and restore a fresh task workflow. */
   box.querySelectorAll(".redoTask").forEach(button=>{
-    button.addEventListener("click",()=>{
-      const card=button.closest(".task-card");
+    button.addEventListener("click",async()=>{
       const taskId=button.dataset.id;
 
+      /* Clear old timer and mark this task as being redone. */
       localStorage.removeItem(taskTimerKey(taskId));
-      card.dataset.redo="true";
+      localStorage.setItem(taskRedoKey(taskId),"true");
 
-      const panel=card.querySelector(".task-link-panel");
-      const openButton=card.querySelector(".openTask");
-      const proof=card.querySelector(".proof-form");
-
-      if(proof){
-        proof.reset();
-        proof.classList.add("hidden");
-        proof.querySelector("button[type=submit]").disabled=false;
-        proof.querySelector("button[type=submit]").textContent="Submit Proof";
-        proof.querySelector(".task-status").textContent="";
-        proof.querySelectorAll("input").forEach(input=>input.disabled=false);
-      }
-
-      card.querySelector(".rejected-panel")?.remove();
-      panel.classList.remove("hidden");
-      openButton.textContent="Opened";
-      openButton.disabled=true;
-
-      if(card.querySelector(".externalTaskLink")){
-        card.querySelector(".task-timer").textContent="Open the task link again. Your new 60-second timer will start when you click it.";
-      }else{
-        card.querySelector(".task-timer").textContent="This task has no configured external link.";
-      }
+      /* Re-render the task: rejected screen disappears, Open returns. */
+      await loadTasks();
     });
   });
 
+  /* Complaint form toggle. */
   box.querySelectorAll(".complaint-toggle").forEach(button=>{
     button.addEventListener("click",()=>{
       const form=button.parentElement.querySelector(".complaint-form");
@@ -875,17 +911,25 @@ async function loadTasks(){
     form.addEventListener("submit",submitComplaint);
   });
 
-  /* Restore an active timer only for a task currently being redone or started. */
-  box.querySelectorAll(".task-card").forEach(card=>{
+  /* Restore timers after refresh ONLY for unlocked normal/redo cards. */
+  box.querySelectorAll(".task-card[data-task-card]").forEach(card=>{
     const taskId=card.dataset.taskCard;
     const previousStatus=card.dataset.previousStatus;
     const clickedAt=getTaskClickTime(taskId);
 
-    if(clickedAt&&previousStatus!=="pending"&&previousStatus!=="approved"){
-      card.querySelector(".task-link-panel").classList.remove("hidden");
+    const canRestore=
+      previousStatus==="none"||
+      (previousStatus==="rejected"&&isTaskRedo(taskId));
+
+    if(clickedAt&&canRestore){
+      card.querySelector(".task-link-panel")?.classList.remove("hidden");
+
       const openButton=card.querySelector(".openTask");
-      openButton.textContent="Opened";
-      openButton.disabled=true;
+      if(openButton){
+        openButton.textContent="Opened";
+        openButton.disabled=true;
+      }
+
       startTaskTimer(taskId,card);
     }
   });
@@ -925,9 +969,11 @@ async function submitComplaint(e){
   status.textContent="Your complaint has been submitted successfully.";
   form.querySelector("textarea").disabled=true;
   button.textContent="Complaint Submitted";
+
+  await loadTasks();
 }
 
-/* SUBMIT A NEW PROOF OR REDO A REJECTED TASK */
+/* SUBMIT PROOF: ONE PENDING PER TASK, OTHER TASKS REMAIN AVAILABLE */
 async function submitTaskProof(e){
   e.preventDefault();
 
@@ -972,7 +1018,7 @@ async function submitTaskProof(e){
   button.disabled=true;
   status.textContent="Checking your previous submissions…";
 
-  /* Do not allow another submission if one is pending or already approved. */
+  /* Block ONLY if this same task is pending or already approved. */
   const check=await db.from("task_submissions")
     .select("id,status")
     .eq("user_id",currentUser.id)
@@ -1028,7 +1074,10 @@ async function submitTaskProof(e){
       return;
     }
 
+    /* Reset redo mode and timer after successful submission. */
     localStorage.removeItem(taskTimerKey(taskId));
+    localStorage.removeItem(taskRedoKey(taskId));
+
     status.textContent="Your new proof has been submitted successfully for administrator review.";
     form.querySelectorAll("input").forEach(input=>input.disabled=true);
     button.textContent="Proof Submitted";
@@ -1293,11 +1342,12 @@ async function loadAdmin(){
       else{
         alert("Submission rejected.");
         loadAdmin();
+        loadTasks();
       }
     };
   });
 
-  /* Load complaint records once the complaints SQL table exists. */
+  /* Complaint management after complaint SQL is installed. */
   const complaintBox=$("adminComplaints");
   const complaintResult=await db.from("task_submission_complaints")
     .select("*").order("created_at",{ascending:false});
